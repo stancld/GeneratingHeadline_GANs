@@ -145,6 +145,7 @@ class generator:
         self.train_losses, self.val_losses = [], []
         self.best_val_loss = float('inf')
         self.n_batches = input_train.shape[0]
+        return input_train.shape
         
         # run the training
         self.model.train()
@@ -233,7 +234,7 @@ class generator:
             
             self.val_losses.append(
                 self._evaluate(input_val, input_val_lengths,
-                               target_val, target_val_lengths)
+                               target_val, target_val_lengths)/self.n_batches
                 )
             
             # Store the best model if validation loss improved
@@ -250,10 +251,12 @@ class generator:
             print(f'Validation Loss: {self.val_losses[epoch]:.3f}')
                        
             # Save training results and push everything to git
-            training_GPU_time = [torch.cuda.get_device_name(), time.time() - start_time]
+            training_GPU_time = np.array(
+                [str(torch.cuda.get_device_name()).split('-')[0], time.time() - start_time]
+                )
             np.savetxt('Results/{}__train_loss.txt'.format(self.model_name), X = self.train_losses)
             np.savetxt('Results/{}__validation_loss.txt'.format(self.model_name), X = self.val_losses)
-            np.savetxt('Results/{}__training_time.txt'.format(self.model_name), X = training_GPU_time)
+            np.savetxt('Results/{}__training_time.txt'.format(self.model_name), X = training_GPU_time, fmt = '%s')
             self.push_to_repo()
             
             #End training if the model has already converged
