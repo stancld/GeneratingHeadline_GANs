@@ -161,7 +161,6 @@ class generator:
                                                                           ):
                 # counter
                 batch += 1
-                print(batch)
                 # zero gradient
                 self.optimiser.zero_grad()
                 ## FORWARD PASS
