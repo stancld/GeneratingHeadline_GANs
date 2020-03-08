@@ -146,7 +146,6 @@ class generator:
         self.best_val_loss = float('inf')
         self.n_batches = input_train.shape[0]
         self.n_batches_val = input_val.shape[0]
-        return input_train.shape
         
         # run the training
         self.model.train()
