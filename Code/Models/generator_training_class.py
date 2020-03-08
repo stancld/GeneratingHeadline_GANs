@@ -145,6 +145,7 @@ class generator:
         self.train_losses, self.val_losses = [], []
         self.best_val_loss = float('inf')
         self.n_batches = input_train.shape[0]
+        self.n_batches_val = input_val.shape[0]
         return input_train.shape
         
         # run the training
@@ -161,6 +162,7 @@ class generator:
                                                                           ):
                 # counter
                 batch += 1
+                print(batch)
                 # zero gradient
                 self.optimiser.zero_grad()
                 ## FORWARD PASS
@@ -218,6 +220,7 @@ class generator:
                 # print some outputs if desired (i.e., each 10 minuts)
                 time_2 = time.time()
                 if (time_2 - time_1) > 600:
+                    print('\n')
                     print("Epoch {:.0f} - Intermediate loss {:.3f} after {:.2f} % of training examples.".format(epoch+1,
                                                                                                           epoch_loss / batch,
                                                                                                           batch / self.n_batches))
@@ -234,7 +237,7 @@ class generator:
             
             self.val_losses.append(
                 self._evaluate(input_val, input_val_lengths,
-                               target_val, target_val_lengths)/self.n_batches
+                               target_val, target_val_lengths)/self.n_batches_val
                 )
             
             # Store the best model if validation loss improved
