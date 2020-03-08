@@ -222,7 +222,7 @@ class generator:
                     print('\n')
                     print("Epoch {:.0f} - Intermediate loss {:.3f} after {:.2f} % of training examples.".format(epoch+1,
                                                                                                           epoch_loss / batch,
-                                                                                                          batch / self.n_batches))
+                                                                                                          100 * batch / self.n_batches))
                     print('Total time {:.1f} s.'.format(time.time()- start_time))
                     np.savetxt('Results/{}__train_time.txt'.format(self.model_name), X = [time.time() - start_time])
                     torch.save(self.model.state_dict(), "../data/Results/Intermediate_{}.pth".format(self.model_name))
