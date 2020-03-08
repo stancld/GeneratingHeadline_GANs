@@ -146,11 +146,10 @@ class generator:
         self.best_val_loss = float('inf')
         self.n_batches = input_train.shape[0]
         self.n_batches_val = input_val.shape[0]
-        
-        # run the training
-        self.model.train()
                 
         for epoch in range(self.grid['max_epochs']):
+            # run the training
+            self.model.train()
             epoch_loss = 0
             batch = 0
             
