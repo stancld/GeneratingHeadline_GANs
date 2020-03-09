@@ -61,7 +61,7 @@ user_password = "dankodorkamichaelzak"
 # username of repo owner
 owner_username = 'stancld'
 # reponame
-reponame = 'GeneratingHeadlines_GANs'
+reponame = 'GeneratingHeadline_GANs'
 
 # generate 
 add_origin_link = (
@@ -83,16 +83,16 @@ print("Link used for git cooperation:\n{}".format(add_origin_link))
 # %cd "drive/My Drive/projects"
 # 
 # # Remove NLP_Project if presented and clone up-to-date repo
-# !rm -r GeneratingHeadlines_GANs
-# !git clone https://github.com/stancld/GeneratingHeadlines_GANs.git
+# !rm -r GeneratingHeadline_GANs
+# !git clone https://github.com/stancld/GeneratingHeadline_GANs.git
 # 
 # # Go to the NLP_Project folder
-# %cd GeneratingHeadlines_GANs
+# %cd GeneratingHeadline_GANs
 # 
 # # Config global user and add origin enabling us to execute push commands
 # !git config --global user.email user_email
 # !git remote rm origin
-# !git remote add origin https://gansforlife:dankodorkamichaelzakgithub@github.com/stancld/GeneratingHeadlines_GANs.git
+# !git remote add origin https://gansforlife:dankodorkamichaelzakgithub@github.com/stancld/GeneratingHeadline_GANs.git
 
 """**Function push_to_repo**"""
 
@@ -101,10 +101,9 @@ def push_to_repo():
   models_branch
   """
   !git remote rm origin
-  !git remote add origin https://gansforlife:dankodorkamichaelzak@github.com/stancld/GeneratingHeadlines_GANs.git
+  !git remote add origin https://gansforlife:dankodorkamichaelzak@github.com/stancld/GeneratingHeadline_GANs.git
   !git checkout master
   !git pull origin master
-  !git branch models_branch
   !git checkout models_branch
   !git add .
   !git commit -m "model state update"
@@ -122,6 +121,7 @@ import os
 import sys
 import time
 import gc
+import copy
 
 import numpy as np
 import pandas as pd
@@ -132,6 +132,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+
 
 import re
 import unicodedata
@@ -413,29 +414,27 @@ text_test, text_lengths_test, headline_test, headline_lengths_test = data2Padded
 
 ## **3.1 Generator - Pretraining**
 
-### **3.1.1 Version - 1**
-
 <hr>
 
 **Description**
 """
 
 grid = {'max_epochs': 100,
-        'batch_size': 96,
+        'batch_size': 64,
         'learning_rate': 5e-4,
         'clip': 10,
-        'l2_reg': 1e-4,
+        'l2_reg': 5e-4,
         'model_name': "generator01"
       }
 
 ##### model ######
 OUTPUT_DIM = len(text_dictionary.index2word.keys())
 ENC_EMB_DIM = 100
-ENC_HID_DIM = 128
-DEC_HID_DIM = 128
+ENC_HID_DIM = 192
+DEC_HID_DIM = 192
 
-ENC_DROPOUT = 0
-DEC_DROPOUT = 0
+ENC_DROPOUT = 0.2
+DEC_DROPOUT = 0.2
 
 Generator = generator(model = _Seq2Seq, loss_function = nn.CrossEntropyLoss, optimiser = optim.Adam, l2_reg = grid['l2_reg'], batch_size = grid['batch_size'],
                       text_dictionary = text_dictionary, embeddings = pre_train_weight, max_epochs = grid['max_epochs'], learning_rate = grid['learning_rate'],
@@ -454,13 +453,7 @@ Generator.train(X_train = text_train,
                 X_val_lengths = text_lengths_val,
                 y_val_lengths = headline_lengths_val)
 
-Generator.model
-
-
-
-
-
-
+3+5
 
 
 
