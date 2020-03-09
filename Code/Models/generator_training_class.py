@@ -376,7 +376,7 @@ class generator:
             del input, target
             torch.cuda.empty_cache()
             
-            output = output.argmax(dim = 1).cpu().numpy()
+            output = output.argmax(dim = 2).cpu().numpy()
             return output
     
     def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths):
