@@ -350,6 +350,12 @@ class generator:
         """
         self.model.eval()
         
+        (input_val, input_val_lengths,
+        target_val, target_val_lengths) = self._generate_batches(padded_input = input_val,
+                                                                      input_lengths = input_val_lengths,
+                                                                      padded_target = target_val,
+                                                                      target_lengths = target_val_lengths)
+        
         for input, target, seq_length_input, seq_length_target in zip(input_val,
                                                                       target_val,
                                                                       input_val_lengths,
