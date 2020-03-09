@@ -142,12 +142,10 @@ class generator:
                                                                   target_lengths = y_val_lengths)
         
         # Initialize empty lists for training and validation loss + put best_val_loss = +infinity
-        self.train_losses, self.val_losses = [], []
-        self.best_val_loss = float('inf')
         self.n_batches = input_train.shape[0]
         self.n_batches_val = input_val.shape[0]
                 
-        for epoch in range(self.grid['max_epochs']):
+        for epoch in range(self.start_epoch, self.grid['max_epochs']):
             # run the training
             self.model.train()
             epoch_loss = 0
@@ -217,15 +215,12 @@ class generator:
                 # print some outputs if desired (i.e., each 10 minuts)
                 time_2 = time.time()
                 if (time_2 - time_1) > 600:
-                    print('\n')
                     print("Epoch {:.0f} - Intermediate loss {:.3f} after {:.2f} % of training examples.".format(epoch+1,
                                                                                                           epoch_loss / batch,
                                                                                                           100 * batch / self.n_batches))
                     print('Total time {:.1f} s.'.format(time.time()- start_time))
                     np.savetxt('Results/{}__train_time.txt'.format(self.model_name), X = [time.time() - start_time])
                     torch.save(self.model.state_dict(), "../data/Results/Intermediate_{}.pth".format(self.model_name))
-                    self.push_to_repo()
-                    
                     time_1 = time.time()
                     
                  
@@ -409,6 +404,21 @@ class generator:
         """
         try:
             self.model.load_state_dict(torch.load("../data/Results/{}.pth".format(self.model_name)))
-            self.model.eval()
+            self.train_losses = np.loadtxt('Results/{}__train_loss.txt'.format(self.model_name)).tolist()
+            self.val_losses = np.loadtxt('Results/{}__validation_loss.txt'.format(self.model_name)).tolist()
+            # proper formatting
+            try:
+                # utilized when 2 or more epochs have already been done
+                self.train_losses = sum([self.train_losses], [])
+                self.val_losses = sum([self.val_losses], [])
+            except:
+                # applied when a single has been completed
+                self.train_losses = [self.train_losses]
+                self.val_losses = [self.val_losses]
+            
+            self.best_val_loss = min(self.val_losses)
+            self.start_epoch = len(self.train_losses)
         except:
-            pass
+            self.start_epoch = 0
+            self.train_losses, self.val_losses = [], []
+            self.best_val_loss = float('inf')
