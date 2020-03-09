@@ -41,7 +41,7 @@ class _Discriminator(nn.Module):
           output -> 
             judgement [batch size,2] ; 2 represent probability
         '''
-        self.seq_len = kwargs['seq_len']
+        #self.seq_len = kwargs['seq_len']
         self.batch_size = kwargs['batch_size']
         self.embed_dim = kwargs['embed_dim']
         self.C_out = kwargs['kernel_num']

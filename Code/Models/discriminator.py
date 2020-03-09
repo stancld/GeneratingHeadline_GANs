@@ -55,8 +55,7 @@ class Discriminator_utility():
     def instan_things(**kwargs):
         grid = {'max_epochs': kwargs['max_epochs'],
                 'learning_rate': kwargs['learning_rate'],
-                'batch_size': kwargs['batch_size'],
-                'seq_len': kwargs['seq_len'],
+                'batch_size': kwargs['batch_size'], 
                 'embed_dim': kwargs['embed_dim'],
                 'drop_out': kwargs['drop_out'],
                 'kernel_num': kwargs['kernel_num'],
@@ -201,13 +200,13 @@ class _Discriminator(nn.Module):
             2)  # [batch_size,out_channel]
 
         # [batch_size,out_channel,seq_len]
-        x2 = F.relu(self.conv1(x)).squeeze(3)
+        x2 = F.relu(self.conv2(x)).squeeze(3)
 
         x2 = F.max_pool1d(x2, x2.size(2)).squeeze(
             2)  # [batch_size,out_channel]
 
         # [batch_size,out_channel,seq_len]
-        x3 = F.relu(self.conv1(x)).squeeze(3)
+        x3 = F.relu(self.conv3(x)).squeeze(3)
 
         x3 = F.max_pool1d(x3, x3.size(2)).squeeze(
             2)  # [batch_size,out_channel]
@@ -223,10 +222,9 @@ class _Discriminator(nn.Module):
 if __name__ == "__main__":
 
     # toy example
-    all_grid = {'max_epochs': 64,
-                'seq_len': 10,
-                'learning_rate': 1e-3,
-                'batch_size': 20,
+    all_grid = {'max_epochs': 200,
+                'learning_rate': 5e-4,
+                'batch_size': 128,
                 'embed_dim': 100,
                 'drop_out': 0,
                 'kernel_num': 5,

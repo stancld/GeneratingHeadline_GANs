@@ -329,6 +329,50 @@ class generator:
         
         return val_loss
     
+    def generate_summaries(self, input_val, input_val_lengths, target_val, target_val_lengths):
+        """
+        :param input_val:
+            type:
+            description:
+        :param input_val_lengths:
+            type:
+            description:
+        :param target_val:
+            type:
+            description:
+        :param target_val_lengths:
+            type:
+            description:
+                
+        :return sumaries:
+            type:
+            description:
+        """
+        self.model.eval()
+        
+        for input, target, seq_length_input, seq_length_target in zip(input_val,
+                                                                      target_val,
+                                                                      input_val_lengths,
+                                                                      target_val_lengths
+                                                                      ):
+            ## FORWARD PASS
+            # Prepare RNN-edible input - i.e. pack padded sequence
+            # trim input, target
+            input = torch.from_numpy(
+                input[:seq_length_input.max()]
+                ).long()
+            target = torch.from_numpy(
+                target[:seq_length_target.max()]
+                ).long().to(self.device)
+                        
+            output = self.model(seq2seq_input = input, input_lengths = seq_length_input,
+                                target = target, teacher_forcing_ratio = 0)
+            del input, target
+            torch.cuda.empty_cache()
+            
+            output = output.argmax(dim = 1).cpu().numpy()
+            return output
+    
     def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths):
         """
         :param input:
