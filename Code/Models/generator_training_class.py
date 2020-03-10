@@ -149,10 +149,6 @@ class generator:
         
         # indices for reshuffling data before running each epoch
         input_arr = np.arange(input_train.shape[0])
-<<<<<<< HEAD
-=======
-        target_arr = np.arange(target_train.shape[0])
->>>>>>> 6f3d6504b61689b6d25693a7898b7306bbe16cc6
         
         for epoch in range(self.start_epoch, self.grid['max_epochs']):
             # run the training
