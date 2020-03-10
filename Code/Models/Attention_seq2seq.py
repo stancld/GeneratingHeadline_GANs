@@ -263,7 +263,7 @@ class _Decoder(nn.Module):
         # output = [1, batch size, dec hid dim]
         # hidden = [1, batch size, dec hid dim]
         # this also means that output == hidden
-        assert (output == hidden).all()
+        # assert (output == hidden).all() # just check
 
         embedded = embedded.squeeze(0)
         output = output.squeeze(0)
