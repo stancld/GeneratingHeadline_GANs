@@ -76,7 +76,7 @@ def data2PaddedArray(input, target, text_dictionary:dict, embeddings):
         if len(sentence) == max_lengths:
             sentence = np.array(sentence).reshape((1,-1))
         else:
-            pad_idx = text_dictionary.word2index['<pad>']
+            pad_idx = text_dictionary['text_dictionary'].word2index['<pad>']
             sentence = np.c_[np.array(sentence).reshape((1,-1)),
                              np.repeat(pad_idx, max_lengths - len(sentence)).reshape((1, -1))
                              ]
@@ -93,7 +93,7 @@ def data2PaddedArray(input, target, text_dictionary:dict, embeddings):
         if len(sentence) == max_lengths:
             sentence = np.array(sentence).reshape((1,-1))
         else:
-            pad_idx = text_dictionary.word2index['<pad>']
+            pad_idx = text_dictionary['headline_dictionary'].word2index['<pad>']
             sentence = np.c_[np.array(sentence).reshape((1,-1)),
                              np.repeat(pad_idx, max_lengths - len(sentence)).reshape((1, -1))
                              ]
