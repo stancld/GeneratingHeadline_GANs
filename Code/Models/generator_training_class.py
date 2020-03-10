@@ -73,6 +73,9 @@ class generator:
         DEC_HID_DIM = kwargs['DEC_HID_DIM']
         ENC_DROPOUT = kwargs['ENC_DROPOUT']
         DEC_DROPOUT = kwargs['DEC_DROPOUT']
+        enc_num_layers = kwargs['enc_num_layers']
+        dec_num_layers = kwargs['dec_num_layers']
+        
         device = kwargs['device']
         
         self.model_name = kwargs['model_name']
@@ -81,11 +84,10 @@ class generator:
         self.device = device
     
         attn = _Attention(ENC_HID_DIM, DEC_HID_DIM)
-        enc = _Encoder(ENC_EMB_DIM, ENC_HID_DIM, DEC_HID_DIM, ENC_DROPOUT, embeddings=embeddings,
-                       device = device)
-        dec = _Decoder(output_dim=OUTPUT_DIM,  enc_hid_dim=ENC_HID_DIM,
-                       dec_hid_dim=DEC_HID_DIM, dropout=DEC_DROPOUT, attention=attn, embeddings=embeddings,
-                       device = device)
+        enc = _Encoder(ENC_EMB_DIM, ENC_HID_DIM, DEC_HID_DIM, rnn_num_layers = enc_num_layers,
+                       ENC_DROPOUT, embeddings=embeddings, device = device)
+        dec = _Decoder(output_dim=OUTPUT_DIM,  enc_hid_dim=ENC_HID_DIM, dec_hid_dim=DEC_HID_DIM, rnn_num_layers = dec_num_layers
+                       dropout=DEC_DROPOUT, attention=attn, embeddings=embeddings, device = device)
         self.model = model(enc, dec, device, embeddings, text_dictionary).to(self.device)
     
         # initialize loss and optimizer

@@ -23,7 +23,8 @@ import torch.optim as optim
 class _Encoder(nn.Module):
     """
     """
-    def __init__(self, emb_dim, enc_hid_dim, dec_hid_dim, dropout, embeddings, device):
+    def __init__(self, emb_dim, enc_hid_dim, dec_hid_dim, rnn_num_layers,
+                 dropout, embeddings, device):
         """
         :param emb_dim:
             type:
@@ -46,7 +47,9 @@ class _Encoder(nn.Module):
         """
         super().__init__()
         self.rnn = nn.GRU(input_size=emb_dim,
-                          hidden_size=enc_hid_dim, bidirectional=True)
+                          hidden_size=enc_hid_dim,
+                          num_layers = rnn_num_layers,
+                          bidirectional=True)
         self.fc = nn.Linear(enc_hid_dim * 2, dec_hid_dim)
         self.dropout = nn.Dropout(dropout)
         self.embeddings = embeddings
@@ -170,8 +173,8 @@ class _Attention(nn.Module):
 class _Decoder(nn.Module):
     """
     """
-    def __init__(self, output_dim, enc_hid_dim,  dec_hid_dim, dropout, attention,
-                 embeddings, device):
+    def __init__(self, output_dim, enc_hid_dim,  dec_hid_dim, rnn_num_layers,
+                 dropout, attention, embeddings, device):
         """
         :param output_dim:
             type:
@@ -202,7 +205,8 @@ class _Decoder(nn.Module):
 
         #self.embedding = nn.Embedding(output_dim, output_dim)
 
-        self.rnn = nn.GRU((enc_hid_dim * 2) + embeddings.shape[1], dec_hid_dim)
+        self.rnn = nn.GRU((enc_hid_dim * 2) + embeddings.shape[1], dec_hid_dim,
+                          num_layers = rnn_num_layers)
 
         self.fc_out = nn.Linear(
             (enc_hid_dim * 2) + dec_hid_dim + embeddings.shape[1], output_dim)
