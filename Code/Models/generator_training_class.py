@@ -158,10 +158,9 @@ class generator:
             
             # shuffle the data
             reshuffle = np.random.shuffle(input_arr)
-            print(input_train.shape, target_train.shape, input_train_lengths.shape)
-            input_train, input_train_lengths = input_train[reshuffle], input_train_lengths[reshuffle]
-            target_train, target_train_lengths = target_train[reshuffle], target_train_lengths[reshuffle]
-            print(input_train.shape, target_train.shape, input_train_lengths.shape)
+            input_train, input_train_lengths = input_train[reshuffle].squeeze(0), input_train_lengths[reshuffle].squeeze(0)
+            target_train, target_train_lengths = target_train[reshuffle].squeeze(0), target_train_lengths[reshuffle].squeeze(0)
+        
             for input, target, seq_length_input, seq_length_target in zip(input_train,
                                                                           target_train,
                                                                           input_train_lengths,
