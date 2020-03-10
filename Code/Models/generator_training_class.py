@@ -146,12 +146,20 @@ class generator:
         # Initialize empty lists for training and validation loss + put best_val_loss = +infinity
         self.n_batches = input_train.shape[0]
         self.n_batches_val = input_val.shape[0]
-                
+        
+        # indices for reshuffling data before running each epoch
+        input_arr = np.arrange(input_val.shape[0])
+        target_arr = np.arrange(target_val.shape[0])
+        
         for epoch in range(self.start_epoch, self.grid['max_epochs']):
             # run the training
             self.model.train()
             epoch_loss = 0
             batch = 0
+            
+            # shuffle the data
+            input_train, input_train_lengths = input_train[np.random.shuffle(input_arr)], input_train_lengths[np.random.shuffle(input_arr)]
+            target_train, target_train_lengths = target_train[np.random.shuffle(target_arr)], target_train_lengths[np.random.shuffle(target_arr)]
             
             for input, target, seq_length_input, seq_length_target in zip(input_train,
                                                                           target_train,
