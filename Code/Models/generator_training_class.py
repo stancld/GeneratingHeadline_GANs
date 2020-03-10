@@ -365,7 +365,7 @@ class generator:
                                                                       input_lengths = input_val_lengths,
                                                                       padded_target = target_val,
                                                                       target_lengths = target_val_lengths)
-        
+        OUTPUT = []
         for input, target, seq_length_input, seq_length_target in zip(input_val,
                                                                       target_val,
                                                                       input_val_lengths,
@@ -386,8 +386,11 @@ class generator:
             del input, target
             torch.cuda.empty_cache()
             
-            output = output.argmax(dim = 2).cpu().numpy()
-            return output
+            OUTPUT.append(
+                output.argmax(dim = 2).cpu().numpy()
+                )
+        
+        return np.array(OUTPUT)
     
     def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths):
         """
