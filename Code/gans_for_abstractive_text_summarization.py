@@ -175,13 +175,16 @@ run Code/Models/generator_training_class.py
 **TODO:** *Put a comment which kind of embeddings we used. Add some references and so on*
 """
 
+embed_dim = 200
+
 # Download and unzip GloVe embedding
 #!wget http://nlp.stanford.edu/data/glove.6B.zip
 #!unzip glove.6B.zip
 
 
 # input your pre-train txt path and parse the data
-path = '../data/glove.6B.100d.txt'
+#path = '../data/glove.6B.100d.txt'
+path = '../data/glove.6B.{:.0f}d.txt'.format(embed_dim)
 embed_dict = {}
 with open(path,'r') as f:
   lines = f.readlines()
@@ -190,7 +193,7 @@ with open(path,'r') as f:
     v = np.array(l.split()[1:]).astype('float')
     embed_dict[w] = v
 
-embed_dict['@@_unknown_@@'] = np.random.random(100) # if we use 100 dimension embeddings
+embed_dict['@@_unknown_@@'] = np.random.random(embed_dim) # if we use 100 dimension embeddings
 
 # remove all the unnecesary files
 #!rm -rf glove.6B.zip
@@ -220,7 +223,7 @@ def extract_weight(text_dictionary):
     
     # add for padding
     elif word_index == len(text_dictionary.index2word.keys()):  
-      pre_train_weight = np.r_[pre_train_weight, np.zeros((1, 100))]
+      pre_train_weight = np.r_[pre_train_weight, np.zeros((1, embed_dim))]
     
     else:
       word = text_dictionary.index2word[word_index]
@@ -244,43 +247,6 @@ data = pd.read_csv('../data/wikihowSep.csv',
                    error_bad_lines = False).astype(str)
 print(data.shape)
 
-"""##### *Clean flawed examples*
-
-<hr>
-
-- drop examples based on the threshold
-"""
-
-max_examples = 50000
-max_threshold = 0.75
-
-# drop examples with an invalid ratio of length of text and headline
-text_len = [len(str(t)) for t in data.text]
-head_len = [len(str(h)) for h in data.headline]
-
-ratio = [h/t for t, h in zip(text_len, head_len)]
-
-problems1 = [problem for problem, r in enumerate(ratio) if (r > max_threshold) & (problem in data.index)]
-data = data.drop(index = problems1).reset_index().drop('index', axis = 1)
-
-# drop too short and long articles (to avoid struggles with CUDA memory)
-text_len = [len(str(t)) for t in data.text]
-
-problems2 = [problem for problem, text_len in enumerate(ratio) if (text_len > 600) & (problem in data.index)]
-data = data.drop(index = problems2)
-
-# some cleaning
-del text_len, head_len, ratio, problems1, problems2
-gc.collect()
-
-# trim the data to have only a subset of the data for our project
-try:
-  data = data[:max_examples]
-except:
-  pass
-
-print(data.shape)
-
 """##### *Pre-process data*"""
 
 # Commented out IPython magic to ensure Python compatibility.
@@ -292,6 +258,82 @@ for item in ['text', 'headline']:
        locals(), globals()
   )
 
+"""##### *Clean flawed examples*
+
+<hr>
+
+- drop examples based on the threshold
+"""
+
+# drop examples with an invalid ratio of length of text and headline
+text_len = [len(t) for t in text_data]
+head_len = [len(h) for h in headline_data]
+
+print('Some statistics')
+
+print('Average length of articles is {:.2f}.'.format(np.array(text_len).mean()))
+print('Min = {:.0f}, Max = {:.0f}, Std = {:.2f}'.format(min(text_len), max(text_len), np.array(text_len).std()))
+
+print('-----')
+
+print('Average length of summaries is {:.2f}.'.format(np.array(head_len).mean()))
+print('Min = {:.0f}, Max = {:.0f}, Std = {:.2f}'.format(min(head_len), max(head_len), np.array(head_len).std()))
+
+max_examples = 150000
+max_threshold = 0.75
+
+# drop examples with an invalid ratio of length of text and headline
+text_len = [len(t) for t in text_data]
+head_len = [len(h) for h in headline_data]
+
+ratio = [h/t for t, h in zip(text_len, head_len)]
+
+problems1 = [problem for problem, r in enumerate(ratio) if (r > max_threshold)]
+text_data, headline_data = np.delete(text_data, problems1), np.delete(headline_data, problems1)
+print("Number of examples after filtering: {:.0f}".format(text_data.shape[0]))
+
+# drop too long articles (to avoid struggles with CUDA memory) and too short
+text_len = [len(t) for t in text_data]
+
+problems2 = [problem for problem, text_length in enumerate(text_len) if ((text_length > 200) | (text_length < 10) )]
+text_data, headline_data = np.delete(text_data, problems2), np.delete(headline_data, problems2)
+print("Number of examples after filtering: {:.0f}".format(text_data.shape[0]))
+
+# drop too pairs with too short/long summaries
+head_len = [len(h) for h in headline_data]
+
+problems3 = [problem for problem, headline_len in enumerate(head_len) if ( (headline_len > 75) | (headline_len < 2) )]
+text_data, headline_data = np.delete(text_data, problems3), np.delete(headline_data, problems3)
+print("Number of examples after filtering: {:.0f}".format(text_data.shape[0]))
+
+# some cleaning
+del text_len, head_len, ratio, problems1, problems2, problems3
+gc.collect()
+
+"""
+# trim the data to have only a subset of the data for our project
+try:
+  data = data[:max_examples]
+except:
+  pass
+"""
+
+"""*Print some statistics*"""
+
+# drop examples with an invalid ratio of length of text and headline
+text_len = [len(t) for t in text_data]
+head_len = [len(h) for h in headline_data]
+
+print('Some statistics')
+
+print('Average length of articles is {:.2f}.'.format(np.array(text_len).mean()))
+print('Min = {:.0f}, Max = {:.0f}, Std = {:.2f}'.format(min(text_len), max(text_len), np.array(text_len).std()))
+
+print('-----')
+
+print('Average length of summaries is {:.2f}.'.format(np.array(head_len).mean()))
+print('Min = {:.0f}, Max = {:.0f}, Std = {:.2f}'.format(min(head_len), max(head_len), np.array(head_len).std()))
+
 """##### *Split data into train/val/test set*
 
 <hr>
@@ -301,7 +343,7 @@ It's crucial to do this split in this step so that a dictionary that will be cre
 
 np.random.seed(222)
 
-split = np.random.uniform(0, 1, size = data.shape[0])
+split = np.random.uniform(0, 1, size = text_data.shape[0])
 
 # Train set
 text_train, headline_train = text_data[split <= 0.9], headline_data[split <= 0.9]
@@ -311,6 +353,13 @@ text_val, headline_val = text_data[(split > 0.9) & (split <= 0.95)], headline_da
 text_test, headline_test = text_data[split > 0.95], headline_data[split > 0.95]
 
 del data
+gc.collect()
+
+"""*Print some statistics*"""
+
+print('Average lengths of articles is {:.2f}'.format(np.array([len(text) for text in text_train]).mean()))
+
+print('Average lengths of sumaries is {:.2f}'.format(np.array([len(text) for text in headline_train]).mean()))
 
 """##### *Sort dataset from the longest sequence to the shortest one*"""
 
@@ -363,33 +412,54 @@ class LangDict:
 
 # Create dictionary based on the training data
 text_dictionary = LangDict()
+headline_dictionary = LangDict()
 
 for article in text_train:
   text_dictionary.add_article(article)
 
 for article in headline_train:
-  text_dictionary.add_article(article)
+  headline_dictionary.add_article(article)
 
-print("There are {:.0f} distinct words in the untrimmed dictionary".format(len(text_dictionary.word2index.keys())))
+print("There are {:.0f} distinct words in the untrimmed text dictionary".format(len(text_dictionary.word2index.keys())))
+print("There are {:.0f} distinct words in the untrimmed headline dictionary".format(len(headline_dictionary.word2index.keys())))
 
 # Trim a dictionary to the words with at least 10 occurences within the text
-min_count = 1
-subset_words = [word for (word, count) in text_dictionary.word2count.items() if count >= min_count]
+text_min_count = 1
+head_min_count = 2
+
+## TEXT DICTIONARY
+subset_words = [word for (word, count) in text_dictionary.word2count.items() if count >= text_min_count]
 text_dictionary.word2index = {word: i for (word, i) in zip(subset_words, range(len(subset_words)))}
 text_dictionary.index2word = {i: word for (word, i) in zip(subset_words, range(len(subset_words)))}
-text_dictionary.word2count = {word: count for (word, count) in text_dictionary.word2count.items() if count >= min_count}
+text_dictionary.word2count = {word: count for (word, count) in text_dictionary.word2count.items() if count >= text_min_count}
 
-print("There are {:.0f} distinct words in the trimmed dictionary, where only word with at least {:.0f} occurences are retained".format(len(text_dictionary.word2index.keys()), min_count))
-del min_count, subset_words
+## HEADLINE DICTIONARY
+subset_words = [word for (word, count) in headline_dictionary.word2count.items() if count >= head_min_count]
+headline_dictionary.word2index = {word: i for (word, i) in zip(subset_words, range(len(subset_words)))}
+headline_dictionary.index2word = {i: word for (word, i) in zip(subset_words, range(len(subset_words)))}
+headline_dictionary.word2count = {word: count for (word, count) in headline_dictionary.word2count.items() if count >= head_min_count}
+
+print("There are {:.0f} distinct words in the trimmed text dictionary, where only word with at least {:.0f} occurences are retained".format(len(text_dictionary.word2index.keys()), text_min_count))
+print("There are {:.0f} distinct words in the trimmed headline dictionary, where only word with at least {:.0f} occurences are retained".format(len(headline_dictionary.word2index.keys()), head_min_count))
+del text_min_count, head_min_count, subset_words
 
 """*Add pad token*"""
 
+## TEXT DICTIONARY
 pad_idx = max(list(text_dictionary.index2word.keys())) + 1
 
 text_dictionary.word2index['<pad>'] = pad_idx
 text_dictionary.index2word[pad_idx] = '<pad>'
 
 print(len(text_dictionary.index2word.keys()))
+
+## HEADLINE DICTIONARY
+pad_idx = max(list(headline_dictionary.index2word.keys())) + 1
+
+headline_dictionary.word2index['<pad>'] = pad_idx
+headline_dictionary.index2word[pad_idx] = '<pad>'
+
+print(len(headline_dictionary.index2word.keys()))
 
 """##### *Extract embedding vectors for words we need*"""
 
@@ -398,17 +468,23 @@ print(len(text_dictionary.index2word.keys()))
 # pre_train_weight = extract_weight(text_dictionary)
 # pre_train_weight = np.array(pre_train_weight, dtype = np.float32)
 # 
-# del embed_dict
+# del embed_dictl
 # gc.collect()
 
 """### **Transform the data**"""
 
 # Train set
-text_train, text_lengths_train, headline_train, headline_lengths_train = data2PaddedArray(text_train, headline_train, text_dictionary, pre_train_weight)
+text_train, text_lengths_train, headline_train, headline_lengths_train = data2PaddedArray(text_train, headline_train, {'text_dictionary': text_dictionary,
+                                                                                                                       'headline_dictionary': headline_dictionary},
+                                                                                          pre_train_weight)
 # Validation set
-text_val, text_lengths_val, headline_val, headline_lengths_val = data2PaddedArray(text_val, headline_val, text_dictionary, pre_train_weight)
+text_val, text_lengths_val, headline_val, headline_lengths_val = data2PaddedArray(text_val, headline_val, {'text_dictionary': text_dictionary,
+                                                                                                           'headline_dictionary': headline_dictionary},
+                                                                                  pre_train_weight)
 # Test set
-text_test, text_lengths_test, headline_test, headline_lengths_test = data2PaddedArray(text_test, headline_test, text_dictionary, pre_train_weight)
+text_test, text_lengths_test, headline_test, headline_lengths_test = data2PaddedArray(text_test, headline_test, {'text_dictionary': text_dictionary,
+                                                                                                                 'headline_dictionary': headline_dictionary},
+                                                                                       pre_train_weight)
 
 """# **3 Training**
 
@@ -419,30 +495,35 @@ text_test, text_lengths_test, headline_test, headline_lengths_test = data2Padded
 **Description**
 """
 
-grid = {'max_epochs': 100,
-        'batch_size': 64,
+grid = {'max_epochs': 3,
+        'batch_size': 32,
         'learning_rate': 5e-4,
         'clip': 10,
-        'l2_reg': 5e-4,
-        'model_name': "generator01"
+        'l2_reg': 1e-4,
+        'model_name': "generator031"
       }
 
 ##### model ######
-OUTPUT_DIM = len(text_dictionary.index2word.keys())
-ENC_EMB_DIM = 100
-ENC_HID_DIM = 192
-DEC_HID_DIM = 192
+OUTPUT_DIM = len(headline_dictionary.index2word.keys())
+ENC_EMB_DIM = pre_train_weight.shape[1]
+ENC_HID_DIM = 512
+DEC_HID_DIM = 512
 
-ENC_DROPOUT = 0.2
-DEC_DROPOUT = 0.2
+enc_num_layers = 1 # number of layers in RNN
+dec_num_layers = 1 # number of layers in RNN
+
+ENC_DROPOUT = 0.1
+DEC_DROPOUT = 0.1
 
 Generator = generator(model = _Seq2Seq, loss_function = nn.CrossEntropyLoss, optimiser = optim.Adam, l2_reg = grid['l2_reg'], batch_size = grid['batch_size'],
                       text_dictionary = text_dictionary, embeddings = pre_train_weight, max_epochs = grid['max_epochs'], learning_rate = grid['learning_rate'],
-                      clip = grid['clip'], teacher_forcing_ratio = 0.5, OUTPUT_DIM = OUTPUT_DIM, ENC_HID_DIM = ENC_HID_DIM, ENC_EMB_DIM = ENC_EMB_DIM,
-                      DEC_HID_DIM = DEC_HID_DIM, ENC_DROPOUT = ENC_DROPOUT, DEC_DROPOUT = DEC_DROPOUT, device = device, model_name = grid['model_name'],
-                      push_to_repo = push_to_repo)
+                      clip = grid['clip'], teacher_forcing_ratio = 1, OUTPUT_DIM = OUTPUT_DIM, ENC_HID_DIM = ENC_HID_DIM, ENC_EMB_DIM = ENC_EMB_DIM,
+                      DEC_HID_DIM = DEC_HID_DIM, ENC_DROPOUT = ENC_DROPOUT, DEC_DROPOUT = DEC_DROPOUT, enc_num_layers = enc_num_layers, dec_num_layers = dec_num_layers,
+                      device = device, model_name = grid['model_name'], push_to_repo = push_to_repo)
 
 Generator.load()
+
+Generator.model
 
 Generator.train(X_train = text_train,
                 y_train = headline_train,
@@ -453,7 +534,29 @@ Generator.train(X_train = text_train,
                 X_val_lengths = text_lengths_val,
                 y_val_lengths = headline_lengths_val)
 
-3+5
+"""## **3.2 Generator - Generating summaries**
 
+<hr>
 
+**Description**
 
+!git pull origin master
+
+# code for the training class
+run Code/Models/generator_training_class.py
+"""
+
+o = Generator.generate_summaries(input_val = text_train,
+                             input_val_lengths = text_lengths_train,
+                             target_val = headline_train,
+                             target_val_lengths = headline_lengths_train)
+
+pad_ix = headline_dictionary.word2index['<pad>']
+
+for k in range(10):
+  print(' '.join([headline_dictionary.index2word[i] for i in o[:, k] if i != pad_ix]))
+
+for k in range(10):
+  print(' '.join([headline_dictionary.index2word[i] for i in headline_train[:, k] if i != pad_ix]))
+
+`Generator.text_dictionary.word2index['sos']
