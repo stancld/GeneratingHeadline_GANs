@@ -15,7 +15,7 @@ Collaborators:
 """
 import numpy as np
 
-def data2PaddedArray(input, target, text_dictionary, embeddings):
+def data2PaddedArray(input, target, text_dictionary:dict, embeddings):
     """
     :param input:
         type:
@@ -38,7 +38,7 @@ def data2PaddedArray(input, target, text_dictionary, embeddings):
         description
     """
     # HELPER function
-    def __word2index__(word, text_dictionary = text_dictionary, embeddings = embeddings):
+    def __word2index__(word, text_dictionary, embeddings = embeddings):
       """
       :param word:
           type:
@@ -62,10 +62,10 @@ def data2PaddedArray(input, target, text_dictionary, embeddings):
     
     # Create a vector of integers representing our text
     numericalVec_input = np.array(
-        [[__word2index__(word) for word in sentence] for sentence in input]
+        [[__word2index__(word, text_dictionary = text_dictionary['text_dictionary']) for word in sentence] for sentence in input]
         )
     numericalVec_target = np.array(
-        [[__word2index__(word) for word in sentence] for sentence in target]
+        [[__word2index__(word, text_dictionary = text_dictionary['headline_dictionary']) for word in sentence] for sentence in target]
         )
     
     ### Convert the input data to embedded representation
