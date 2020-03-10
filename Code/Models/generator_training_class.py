@@ -148,8 +148,8 @@ class generator:
         self.n_batches_val = input_val.shape[0]
         
         # indices for reshuffling data before running each epoch
-        input_arr = np.arange(input_val.shape[0])
-        target_arr = np.arange(target_val.shape[0])
+        input_arr = np.arange(input_train.shape[0])
+        target_arr = np.arange(target_train.shape[0])
         
         for epoch in range(self.start_epoch, self.grid['max_epochs']):
             # run the training
