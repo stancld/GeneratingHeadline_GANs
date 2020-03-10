@@ -85,8 +85,8 @@ class generator:
     
         attn = _Attention(ENC_HID_DIM, DEC_HID_DIM)
         enc = _Encoder(ENC_EMB_DIM, ENC_HID_DIM, DEC_HID_DIM, rnn_num_layers = enc_num_layers,
-                       ENC_DROPOUT, embeddings=embeddings, device = device)
-        dec = _Decoder(output_dim=OUTPUT_DIM,  enc_hid_dim=ENC_HID_DIM, dec_hid_dim=DEC_HID_DIM, rnn_num_layers = dec_num_layers
+                       dropout = ENC_DROPOUT, embeddings=embeddings, device = device)
+        dec = _Decoder(output_dim=OUTPUT_DIM,  enc_hid_dim=ENC_HID_DIM, dec_hid_dim=DEC_HID_DIM, rnn_num_layers = dec_num_layers,
                        dropout=DEC_DROPOUT, attention=attn, embeddings=embeddings, device = device)
         self.model = model(enc, dec, device, embeddings, text_dictionary).to(self.device)
     
