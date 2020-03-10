@@ -116,6 +116,8 @@ def push_to_repo():
 **Import essential libraries and load necessary conditionalities**
 """
 
+pip install rouge
+
 # Commented out IPython magic to ensure Python compatibility.
 import os
 import sys
@@ -140,7 +142,7 @@ import nltk
 from nltk.tokenize.toktok import ToktokTokenizer
 from nltk.corpus import stopwords
 
-from gensim.models import Word2Vec
+from rouge import Rouge
 
 # %matplotlib inline
 
@@ -183,8 +185,8 @@ embed_dim = 200
 
 
 # input your pre-train txt path and parse the data
-#path = '../data/glove.6B.100d.txt'
 path = '../data/glove.6B.{:.0f}d.txt'.format(embed_dim)
+
 embed_dict = {}
 with open(path,'r') as f:
   lines = f.readlines()
@@ -193,7 +195,7 @@ with open(path,'r') as f:
     v = np.array(l.split()[1:]).astype('float')
     embed_dict[w] = v
 
-embed_dict['@@_unknown_@@'] = np.random.random(embed_dim) # if we use 100 dimension embeddings
+embed_dict['@@_unknown_@@'] = np.random.random(embed_dim)
 
 # remove all the unnecesary files
 #!rm -rf glove.6B.zip
@@ -495,9 +497,9 @@ text_test, text_lengths_test, headline_test, headline_lengths_test = data2Padded
 **Description**
 """
 
-grid = {'max_epochs': 3,
+grid = {'max_epochs': 5,
         'batch_size': 32,
-        'learning_rate': 5e-4,
+        'learning_rate': 3e-4,
         'clip': 10,
         'l2_reg': 1e-4,
         'model_name': "generator031"
@@ -525,7 +527,7 @@ Generator.load()
 
 Generator.model
 
-Generator.train(X_train = text_train,
+"""Generator.train(X_train = text_train,
                 y_train = headline_train,
                 X_val = text_val,
                 y_val = headline_val,
@@ -534,7 +536,7 @@ Generator.train(X_train = text_train,
                 X_val_lengths = text_lengths_val,
                 y_val_lengths = headline_lengths_val)
 
-"""## **3.2 Generator - Generating summaries**
+## **3.2 Generator - Generating summaries**
 
 <hr>
 
@@ -546,17 +548,48 @@ Generator.train(X_train = text_train,
 run Code/Models/generator_training_class.py
 """
 
-o = Generator.generate_summaries(input_val = text_train,
-                             input_val_lengths = text_lengths_train,
-                             target_val = headline_train,
-                             target_val_lengths = headline_lengths_train)
+o = Generator.generate_summaries(input_val = text_val,
+                             input_val_lengths = text_lengths_val,
+                             target_val = headline_val,
+                             target_val_lengths = headline_lengths_val)
 
 pad_ix = headline_dictionary.word2index['<pad>']
 
-for k in range(10):
-  print(' '.join([headline_dictionary.index2word[i] for i in o[:, k] if i != pad_ix]))
+hypotheses = sum([[' '.join([headline_dictionary.index2word[i] for i in o[batch][1:, example] if i != pad_ix])[:-6] for example in range(32)] for batch in range(o.shape[0])], [])
+references = [' '.join([headline_dictionary.index2word[i] for i in headline_val[1:, example] if i != pad_ix])[:-6] for example in range(32)]
 
-for k in range(10):
-  print(' '.join([headline_dictionary.index2word[i] for i in headline_train[:, k] if i != pad_ix]))
+hypotheses[:5]
 
-`Generator.text_dictionary.word2index['sos']
+references[:5]
+
+rouge1 = []
+rouge2 = []
+rougel = []
+for hypothesis, reference in zip(hypotheses, references):
+  rouge1.append(
+      rouge.get_scores(hypothesis, reference)[0]['rouge-1']['f']
+  )
+  rouge2.append(
+      rouge.get_scores(hypothesis, reference)[0]['rouge-2']['f']
+  )
+  rougel.append(
+      rouge.get_scores(hypothesis, reference)[0]['rouge-l']['f']
+  )
+
+print('ROUGE-1: {:.3f}'.format(np.array(rouge1).mean()))
+print('ROUGE-2: {:.3f}'.format(np.array(rouge2).mean()))
+print('ROUGE-l: {:.3f}'.format(np.array(rougel).mean()))
+
+gc.collect()
+
+
+
+
+
+"""## **3.3 Generator - Generating summaries**
+
+<hr>
+
+**Description**
+"""
+
