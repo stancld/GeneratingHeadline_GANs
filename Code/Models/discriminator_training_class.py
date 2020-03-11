@@ -50,7 +50,7 @@ class Discriminator_utility():
         self.model = _CNN_text_clf(**self.grid).to(self.device)
 
         self.embedding_layer = nn.Embedding.from_pretrained(
-            torch.from_numpy(pre_train_weight), freeze=True)
+            torch.from_numpy(embedding), freeze=True)
 
         self.optimiser = optim.Adam(
             self.model.parameters(), lr=self.grid['learning_rate'])
