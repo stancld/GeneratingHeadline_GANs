@@ -58,6 +58,32 @@ class Discriminator_utility():
         # All weights are equal to 1 and we have 2 classes
         self.lossfunction = nn.CrossEntropyLoss().to(self.device)
 
+    def run_epochs(self, X_train, y_train, X_test, y_test):
+        '''
+        Args:
+            input:
+                X_train [N_samples,seq_len] word indices type long()
+                y_train [N_samples,] -> boolean tensor 
+
+                X_test [N_samples,seq_len] word indices type long()
+                y_test [N_samples,] -> boolean tensor 
+        '''
+        best_valid_loss = float('inf')
+
+        for epoch in range(self.grid['max_epochs']):
+
+            train_loss = self.training(X_train, y_train)
+            valid_loss = self.evaluation(X_test, y_test)
+
+            if valid_loss < best_valid_loss:
+                best_valid_loss = valid_loss
+                m = copy.deepcopy(self.model)
+                print(f'Epoch: {epoch+1}:')
+                print(f'Train Loss: {train_loss:.3f}')
+                print(f'Validation Loss: {valid_loss:.3f}')
+
+        return best_valid_loss, m
+
     def training(self, X_train, y_train):
         '''
         Args:
@@ -122,32 +148,6 @@ class Discriminator_utility():
             loss = self.lossfunction(local_output, local_labels)
             epoch_loss += loss.item()
         return epoch_loss
-
-    def run_epochs(self, X_train, y_train, X_test, y_test):
-        '''
-        Args:
-            input:
-                X_train [N_samples,seq_len] word indices type long()
-                y_train [N_samples,] -> boolean tensor 
-
-                X_test [N_samples,seq_len] word indices type long()
-                y_test [N_samples,] -> boolean tensor 
-        '''
-        best_valid_loss = float('inf')
-
-        for epoch in range(self.grid['max_epochs']):
-
-            train_loss = self.training(X_train, y_train)
-            valid_loss = self.evaluation(X_test, y_test)
-
-            if valid_loss < best_valid_loss:
-                best_valid_loss = valid_loss
-                m = copy.deepcopy(self.model)
-                print(f'Epoch: {epoch+1}:')
-                print(f'Train Loss: {train_loss:.3f}')
-                print(f'Validation Loss: {valid_loss:.3f}')
-
-        return best_valid_loss, m
 
     def _embedding_layer(self, x):
         '''
@@ -240,21 +240,9 @@ class Discriminator_utility():
                     'device':device}
 
             #####
-            Training: training(X_train, y_train)
-
-            Args:
-                X_train [N_samples,seq_len]
-                y_train [N_samples,] ; boolean, long type, 1d tensor
-
-            #####
-            Evaluation: evaluation(X_test, y_test)
-
-            Args:
-                X_test [N_samples,seq_len]
-                y_test [N_samples,] ; boolean, long type, 1d tensor
-
-            #####
             Iterate epoch: run_epoch(X_train, y_train, X_test, y_test)
+
+            this function automates epochs training and evaluation with X_train, y_train, X_test, y_test
 
             Arg:
                 input:
@@ -267,6 +255,25 @@ class Discriminator_utility():
                 output:
                 best_valid_loss
                 m -> model that gives the best_valid_loss
+
+            #####
+            Training: training(X_train, y_train)
+
+            this function train the model with X_train, y_train
+
+            Args:
+                X_train [N_samples,seq_len]
+                y_train [N_samples,] ; boolean, long type, 1d tensor
+
+            #####
+            Evaluation: evaluation(X_test, y_test)
+
+            this function evaluation the model with X_test, y_test
+
+            Args:
+                X_test [N_samples,seq_len]
+                y_test [N_samples,] ; boolean, long type, 1d tensor
+
 
             #####
             Prediction:
