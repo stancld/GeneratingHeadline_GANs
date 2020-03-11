@@ -163,7 +163,7 @@ class generator:
             target_train, target_train_lengths = target_train[reshuffle].squeeze(0), target_train_lengths[reshuffle].squeeze(0)
         
             # Initialize optimiser for updating lr
-            self.otpimiser = self.optimiser_(self.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate'],
+            self.optimiser = self.optimiser_(self.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate'],
                                              weight_decay = self.grid['l2_reg'])
             
             for input, target, seq_length_input, seq_length_target in zip(input_train,
