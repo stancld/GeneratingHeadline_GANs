@@ -92,7 +92,7 @@ class generator:
     
         # initialize loss and optimizer
         #self.optimiser = optimiser(self.model.parameters(), lr=self.grid['learning_rate'],
-        $                           weight_decay = self.grid['l2_reg'])
+                                   weight_decay = self.grid['l2_reg'])
         self.optimiser_ = optimiser
         self.loss_function = loss_function().to(self.device)
     
