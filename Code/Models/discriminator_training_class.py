@@ -34,7 +34,6 @@ class Discriminator_utility():
         self.grid = {'max_epochs': kwargs['max_epochs'],
                      'learning_rate': kwargs['learning_rate'],
                      'batch_size': kwargs['batch_size'],
-                     'seq_len': kwargs['seq_len'],
                      'embed_dim': kwargs['embed_dim'],
                      'drop_out': kwargs['drop_out'],
                      'kernel_num': kwargs['kernel_num'],
@@ -49,7 +48,8 @@ class Discriminator_utility():
 
         self.model = _CNN_text_clf(**self.grid).to(self.device)
 
-        self.np_embedding = embedding
+        self.embedding_layer = nn.Embedding.from_pretrained(
+            torch.from_numpy(embedding), freeze=True)
 
         self.optimiser = optim.Adam(
             self.model.parameters(), lr=self.grid['learning_rate'])
@@ -61,27 +61,27 @@ class Discriminator_utility():
     def training(self, X_train, y_train):
         '''
         Args:
-            X_train [N_samples,seq_len]
-            y_train [N_samples,] ; boolean, long type, 1d tensor
+            X_train -> [N_samples,seq_len]; word index array
+            y_train -> [N_samples,]; boolean, long type, 1d tensor
 
             output from _generate_batches:
-                local_batch ->[batch_size, seq_len]
-                local_labels ->[batch_size,] boolean
+                local_batch  -> [batch_size, seq_len]
+                local_labels -> [batch_size,]; boolean
         '''
         self.model.train()
         epoch_loss = 0
         for local_batch, local_labels in self._generate_batches(X_train, y_train):
 
-            # print('input are:')
-            # print(local_batch.size())
-            # print(local_labels.size())
+            # pass through embedding layer
+            local_batch_embedded = self._embedding_layer(local_batch)
+            # -> [batch_size,seq_len,emb_dim]
 
             local_batch, local_labels = local_batch.to(
                 self.device), local_labels.flatten().to(self.device)
 
-            # pass through embedding layer
-            local_batch_embedded = self._embedding_layer(local_batch)
-            # -> [batch_size,seq_len,emb_dim]
+            # print('input are:')
+            # print(local_batch.size())
+            # print(local_labels.size())
 
             self.optimiser.zero_grad()
             local_output = self.model(local_batch_embedded)
@@ -99,23 +99,23 @@ class Discriminator_utility():
     def evaluation(self, X_test, y_test):
         '''
         Args:
-            X_test [N_samples,seq_len]
-            y_test [N_samples,] ; boolean, long type, 1d tensor
+            X_test -> [N_samples,seq_len]; word index array
+            y_test -> [N_samples,]; boolean, long type, 1d tensor
 
             output batches:
-                local_batch ->[batch_size, seq_len]
-                local_labels ->[batch_size,] boolean
+                local_batch  -> [batch_size, seq_len]
+                local_labels -> [batch_size,] boolean
         '''
         self.model.eval()
         epoch_loss = 0
         for local_batch, local_labels in self._generate_batches(X_test, y_test):
 
-            local_batch, local_labels = local_batch.to(
-                self.device), local_labels.flatten().to(self.device)
-
             # pass through embedding layer
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
+
+            local_batch, local_labels = local_batch.to(
+                self.device), local_labels.flatten().to(self.device)
 
             local_output = self.model(local_batch_embedded)
 
@@ -158,7 +158,7 @@ class Discriminator_utility():
             output -> [N_samples,seq_len,embedding_dimension]
         '''
 
-        return(self.np_embedding(x).float())
+        return self.embedding_layer(x).float()
 
     def _generate_batches(self, summary_bag, label):
         """
@@ -190,18 +190,16 @@ class Discriminator_utility():
 
     def save(self):
         """
-        :param name_path:
-            type:
-            description:
+        Args:
+
         """
         torch.save(self.model.state_dict(),
                    "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
 
     def load(self):
         """
-        :param name_path:
-            type:
-            description:
+        Args:
+
         """
         try:
             self.model.load_state_dict(torch.load(
@@ -232,7 +230,6 @@ class Discriminator_utility():
             param = {'max_epochs':64,
                     'learning_rate':1e-3,
                     'batch_size':1,
-                    'seq_len': 20,                   # length of your summary
                     'embed_dim': 100,
                     'drop_out': 0,
                     'kernel_num': 5,                 # number of your feature map
