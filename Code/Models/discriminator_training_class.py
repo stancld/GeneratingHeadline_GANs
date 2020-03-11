@@ -276,7 +276,13 @@ class Discriminator_utility():
 
 
             #####
-            Prediction:
+            Prediction: self.model(embedded)
 
+            this function classifies the embedded sequence 
+            
+            Args:
+
+            embedded type -> torch.Tensor
+            embedded dim -> [batch_size,seq_len,embed_dim] 
           '''
         )
