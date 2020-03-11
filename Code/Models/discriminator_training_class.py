@@ -34,7 +34,6 @@ class Discriminator_utility():
         self.grid = {'max_epochs': kwargs['max_epochs'],
                      'learning_rate': kwargs['learning_rate'],
                      'batch_size': kwargs['batch_size'],
-                     'seq_len': kwargs['seq_len'],
                      'embed_dim': kwargs['embed_dim'],
                      'drop_out': kwargs['drop_out'],
                      'kernel_num': kwargs['kernel_num'],
@@ -231,7 +230,6 @@ class Discriminator_utility():
             param = {'max_epochs':64,
                     'learning_rate':1e-3,
                     'batch_size':1,
-                    'seq_len': 20,                   # length of your summary
                     'embed_dim': 100,
                     'drop_out': 0,
                     'kernel_num': 5,                 # number of your feature map
