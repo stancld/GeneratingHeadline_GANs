@@ -111,12 +111,12 @@ class Discriminator_utility():
         epoch_loss = 0
         for local_batch, local_labels in self._generate_batches(X_test, y_test):
 
-            local_batch, local_labels = local_batch.to(
-                self.device), local_labels.flatten().to(self.device)
-
             # pass through embedding layer
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
+
+            local_batch, local_labels = local_batch.to(
+                self.device), local_labels.flatten().to(self.device)
 
             local_output = self.model(local_batch_embedded)
 
@@ -159,7 +159,7 @@ class Discriminator_utility():
             output -> [N_samples,seq_len,embedding_dimension]
         '''
 
-        return(self.embedding_layer(x).float())
+        return self.embedding_layer(x).float()
 
     def _generate_batches(self, summary_bag, label):
         """
