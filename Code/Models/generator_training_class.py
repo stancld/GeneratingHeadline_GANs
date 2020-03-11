@@ -91,8 +91,9 @@ class generator:
         self.model = model(enc, dec, device, embeddings, text_dictionary).to(self.device)
     
         # initialize loss and optimizer
-        self.optimiser = optimiser(self.model.parameters(), lr=self.grid['learning_rate'],
-                                   weight_decay = self.grid['l2_reg'])
+        #self.optimiser = optimiser(self.model.parameters(), lr=self.grid['learning_rate'],
+        $                           weight_decay = self.grid['l2_reg'])
+        self.optimiser_ = optimiser
         self.loss_function = loss_function().to(self.device)
     
     def train(self, X_train, y_train, X_val, y_val,
@@ -161,6 +162,10 @@ class generator:
             input_train, input_train_lengths = input_train[reshuffle].squeeze(0), input_train_lengths[reshuffle].squeeze(0)
             target_train, target_train_lengths = target_train[reshuffle].squeeze(0), target_train_lengths[reshuffle].squeeze(0)
         
+            # Initialize optimiser for updating lr
+            self.otpimiser = self.optimiser_(self.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate'],
+                                             weight_decay = self.grid['l2_reg'])
+            
             for input, target, seq_length_input, seq_length_target in zip(input_train,
                                                                           target_train,
                                                                           input_train_lengths,
