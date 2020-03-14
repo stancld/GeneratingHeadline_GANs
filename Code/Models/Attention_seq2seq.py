@@ -288,7 +288,7 @@ class _Decoder(nn.Module):
 class _Seq2Seq(nn.Module):
     """
     """
-    def __init__(self, encoder, decoder, device, embeddings, text_dictionary, adversarial):
+    def __init__(self, encoder, decoder, device, embeddings, text_dictionary):
         """
         :param encoder:
             type:
@@ -303,9 +303,6 @@ class _Seq2Seq(nn.Module):
             type:
             description:
         :param text_dictionary:
-            type:
-            description:
-        :param adversarial:
             type:
             description:
         """
@@ -347,7 +344,7 @@ class _Seq2Seq(nn.Module):
                 )
             ).to(self.device)
 
-    def forward(self, seq2seq_input, input_lengths, target, teacher_forcing_ratio=0.5):
+    def forward(self, seq2seq_input, input_lengths, target, teacher_forcing_ratio=0.5, adversarial = False):
         """
         :param seq2seq_input:
             type:
@@ -359,6 +356,9 @@ class _Seq2Seq(nn.Module):
             type:
             description:
         :param teacher_forcing_ratio:
+            type:
+            description:
+        :param adversarial:
             type:
             description:
                 
@@ -384,8 +384,8 @@ class _Seq2Seq(nn.Module):
         encoder_outputs, hidden = self.encoder(seq2seq_input, input_lengths)
         
         # introduce noise if adversarial = True
-        if adversarial = True:
-            hidden += 
+        if adversarial == True:
+            pass
         
         # check: make dimension consistent
         dec_input = target[0]

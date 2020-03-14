@@ -164,30 +164,71 @@ class AdversarialTraining:
             # Initialize optimise
             self.optimiser_D = self.optimiser_D_(self.discriminator.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_D'],
                                                  weight_decay = self.grid['l2_reg'])
-            self.optimiser_G = self.optimiser_G_(self.discriminator.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_G'],
+            self.optimiser_G = self.optimiser_G_(self.generator.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_G'],
                                                  weight_decay = self.grid['l2_reg'])
             
-            for input, target, seq_length_input, seq_length_target in zip(input_train,
-                                                                          target_train,
-                                                                          input_train_lengths,
-                                                                          target_train_lengths
-                                                                          ):
+            for input, target, seq_length_input, seq_length_target, labels in zip(input_train,
+                                                                                  target_train,
+                                                                                  input_train_lengths,
+                                                                                  target_train_lengths,
+                                                                                  labels_train
+                                                                                  ):
                 batch += 1
+                # Paragraphs
                 input = torch.from_numpy(
                     input[:seq_length_input.max()]
                 ).long()
+                # Summaries
+                target = torch.from_numpy(
+                target[:seq_length_target.max()]
+                ).long().to(self.device)           
+                                
                 #####
                 # (1) Update Discriminator: we maximize BCELoss given as log(D(x)) + log(1 - D(G(z)))
                 # This is done in two subsequent steps according to https://github.com/soumith/ganhacks
                 #####
+                # create vectors of 1s and 0s representing labels of real and generated/fake summaries
+                real_labels = torch.ones(self.batch_size).to(self.device)
+                fake_labels = torch.zeros(self.batch_size).to(self.device)
+                
                 
                 ## Compute log(D(x)) using batch of real examples
                 self.optimiser_D.zero_grad()
-                #embedding
-                input = self._embedding_layer(input).to(self.device)              
+                # embedding
+                target_embedded = self._embedding_layer(target)
+                # dicriminator output
+                output_D = self.discriminator(target_embedded)
+                # calculate loss function on the batch of real examples
+                error_D_real = self.loss_function_D(output_D, real_labels)
+                # Calculate gradient
+                error_D_real.backward()
+                # cleaning
+                del target_embedded, output_D
+                torch.cuda.empty_cache()
                 
+                ## Compute log(1 - D(G(z)))
+                # Generate summaries
+                output_G = self.generator(seq2seq_input = input, input_lengths = seq_length_input,
+                                          target = target, teacher_forcing_ratio = self.grid['teacher_forcing_ratio'],
+                                          adversarial = True)
+                output_G = F.log_softmax(output_G, dim = 2)
+                # embedding
+                output_G = self._embedding_layer(output_G)
+                # discriminator output D(G(z))
+                output_D_G = self.discriminator(output_G)
+                # calculate loss function on the batch of fake examples
+                error_D_fake = self.loss_function_D(output_D_G, fake_labels)
+                # calculate gradient
+                error_D_fake.backward()
                 
+                # sum gradients from computation both on real and fake examples
+                error_D = error_D_real + error_D_fake
                 
+                # update step
+                self.optimiser_D.step()
+                
+                # cleaning
+                /
                 
                 
     
