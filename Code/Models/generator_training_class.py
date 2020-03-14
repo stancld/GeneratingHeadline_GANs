@@ -32,7 +32,7 @@ class generator:
     """
     """
     def __init__(self, model, loss_function, optimiser, batch_size, 
-                 text_dictionary, embeddings, **kwargs):
+                 text_dictionary, embeddings, adversarial = False, **kwargs):
         """
         :param model:
             type:
@@ -88,7 +88,7 @@ class generator:
                        dropout = ENC_DROPOUT, embeddings=embeddings, device = device)
         dec = _Decoder(output_dim=OUTPUT_DIM,  enc_hid_dim=ENC_HID_DIM, dec_hid_dim=DEC_HID_DIM, rnn_num_layers = dec_num_layers,
                        dropout=DEC_DROPOUT, attention=attn, embeddings=embeddings, device = device)
-        self.model = model(enc, dec, device, embeddings, text_dictionary).to(self.device)
+        self.model = model(enc, dec, device, embeddings, text_dictionary, adversarial).to(self.device)
     
         # initialize loss and optimizer
         #self.optimiser = optimiser(self.model.parameters(), lr=self.grid['learning_rate'],
@@ -144,7 +144,7 @@ class generator:
                                                                   padded_target = y_val,
                                                                   target_lengths = y_val_lengths)
         
-        # Initialize empty lists for training and validation loss + put best_val_loss = +infinity
+        # Save number of batches of training and validation sets for a proper computation of losses
         self.n_batches = input_train.shape[0]
         self.n_batches_val = input_val.shape[0]
         

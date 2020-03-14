@@ -288,7 +288,7 @@ class _Decoder(nn.Module):
 class _Seq2Seq(nn.Module):
     """
     """
-    def __init__(self, encoder, decoder, device, embeddings, text_dictionary):
+    def __init__(self, encoder, decoder, device, embeddings, text_dictionary, adversarial):
         """
         :param encoder:
             type:
@@ -303,6 +303,9 @@ class _Seq2Seq(nn.Module):
             type:
             description:
         :param text_dictionary:
+            type:
+            description:
+        :param adversarial:
             type:
             description:
         """
@@ -379,6 +382,10 @@ class _Seq2Seq(nn.Module):
         # encoder_outputs is all hidden states of the input sequence, back and forwards
         # hidden is the final forward and backward hidden states, passed through a linear layer
         encoder_outputs, hidden = self.encoder(seq2seq_input, input_lengths)
+        
+        # introduce noise if adversarial = True
+        if adversarial = True:
+            hidden += 
         
         # check: make dimension consistent
         dec_input = target[0]
