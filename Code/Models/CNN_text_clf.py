@@ -67,13 +67,13 @@ class _CNN_text_clf(nn.Module):
             2)  # [batch_size,out_channel]
 
         # [batch_size,out_channel,seq_len]
-        x2 = F.relu(self.conv1(x)).squeeze(3)
+        x2 = F.relu(self.conv2(x)).squeeze(3)
 
         x2 = F.max_pool1d(x2, x2.size(2)).squeeze(
             2)  # [batch_size,out_channel]
 
         # [batch_size,out_channel,seq_len]
-        x3 = F.relu(self.conv1(x)).squeeze(3)
+        x3 = F.relu(self.conv3(x)).squeeze(3)
 
         x3 = F.max_pool1d(x3, x3.size(2)).squeeze(
             2)  # [batch_size,out_channel]
