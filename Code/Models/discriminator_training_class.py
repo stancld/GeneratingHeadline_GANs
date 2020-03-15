@@ -124,7 +124,7 @@ class Discriminator_utility():
 
             self.optimiser.zero_grad()
             local_output = self.model(local_batch_embedded)
-            print(local_output)
+            print(local_labels)
 
             # print('output are:')
             # print(local_output.size())
