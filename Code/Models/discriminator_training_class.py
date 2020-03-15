@@ -178,18 +178,17 @@ class Discriminator_utility():
                 local_labels -> [batch_size,] boolean
         '''
         self.m.eval()
-        outputs = []
+        outputs_true = 0
         for local_batch, local_labels in self._generate_batches(X_test, y_test):
             #
-            local_batch, local_labels = local_batch.to(self.device), local_labels.flatten().to(self.device)
+            local_batch, local_labels = local_batch.to(self.device), local_labels
             # pass through embedding layer
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
 
-            local_output = self.m(local_batch_embedded).round().numpy()
-            outputs.append(local_output)
-        outputs = sum(outputs, [])
-        return sum(outputs == y_test) / y_test.shape[0]
+            local_output = self.m(local_batch_embedded).round().detach.cpu().numpy()
+            outputs_true += (local_output == local_labels).float()
+        return outputs_true / y_test.shape[0]
 
     def _embedding_layer(self, x):
         '''
