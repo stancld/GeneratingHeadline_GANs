@@ -97,14 +97,12 @@ class Discriminator_utility():
                 if self.train_losses[epoch-2] - self.train_losses[epoch] < 0.001:
                     np.savetxt('Results/discriminator_{}__train_loss.txt'.format(self.grid['model_name']), X = self.train_losses)
                     np.savetxt('Results/discriminator_{}__validation_loss.txt'.format(self.grid['model_name']), X = self.val_losses)
-                    self.push_to_repo()
 
                     statement = "The model has converged after {:.0f} epochs.".format(epoch+1)
                     return statement
         
         np.savetxt('Results/discriminator_{}__train_loss.txt'.format(self.model_name), X = self.train_losses)
         np.savetxt('Results/discriminator_{}__validation_loss.txt'.format(self.model_name), X = self.val_losses)
-        self.push_to_repo()
 
     def training(self, X_train, y_train):
         '''
