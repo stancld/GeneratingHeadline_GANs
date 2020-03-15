@@ -83,4 +83,4 @@ class _CNN_text_clf(nn.Module):
 
         # nn.BCEWithLogitsLoss will apply sigmoid activation internally
         x = self.fc(x)
-        return F.softmax(x)
+        return F.softmax(x,1)
