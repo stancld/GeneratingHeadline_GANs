@@ -73,8 +73,15 @@ class Discriminator_utility():
         self.n_batches = np.ceil(X_train.shape[0] / self.grid['batch_size'])
         self.n_batches_test = np.ceil(X_test.shape[0] / self.grid['batch_size'])
         
+        # measure the time of training
+        self.start_time = time.time()        
+        # measure the time to print some output every 10 minutes
+        self.time_1 = time.time()
+        self.epoch = 0
+        
         for epoch in range(self.grid['max_epochs']):
-
+            self.epoch += 1
+            
             train_loss = self.training(X_train, y_train)
             valid_loss = self.evaluation(X_test, y_test)
 
@@ -99,7 +106,9 @@ class Discriminator_utility():
         '''
         self.model.train()
         epoch_loss = 0
+        batch = 0
         for local_batch, local_labels in self._generate_batches(X_train, y_train):
+            batch += 1
             
             local_batch, local_labels = local_batch.to(self.device), local_labels.flatten().to(self.device)
             # pass through embedding layer
@@ -121,7 +130,14 @@ class Discriminator_utility():
             loss.backward()
             self.optimiser.step()
             epoch_loss += loss.item()
-        return epoch_loss / self.n_bacthes
+            time_2 = time.time()
+            if (time_2 - self.time_1) > 120:
+                print("Epoch {:.0f} - Intermediate loss {:.3f} after {:.2f} % of training examples.".format(self.epoch,
+                                                                                                      epoch_loss / batch,
+                                                                                                      100 * batch / self.n_batches))
+                print('Total time {:.1f} s.'.format(time.time()- self.start_time))
+                self.time_1 = time.time()
+        return epoch_loss / self.n_batches
 
     def evaluation(self, X_test, y_test):
         '''
