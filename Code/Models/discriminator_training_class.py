@@ -37,6 +37,7 @@ class Discriminator_utility():
                      'embed_dim': kwargs['embed_dim'],
                      'drop_out': kwargs['drop_out'],
                      'kernel_num': kwargs['kernel_num'],
+                     'seq_len': kwargs['seq_len']
                      # for text this should be one
                      'in_channel': kwargs['in_channel'],
                      # the conv net are used in parallel in text classification
