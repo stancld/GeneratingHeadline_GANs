@@ -75,10 +75,6 @@ class Discriminator_utility():
         self.n_batches_test = np.ceil(X_test.shape[0] / self.grid['batch_size'])
         self.train_losses, self.val_losses = [], []
         
-        # measure the time of training
-        self.start_time = time.time()        
-        # measure the time to print some output every 10 minutes
-        self.time_1 = time.time()
         self.epoch = 0
         
         for epoch in range(self.grid['max_epochs']):
@@ -97,6 +93,10 @@ class Discriminator_utility():
             # save losses
             self.train_losses.append(train_loss)
             self.val_losses.append(valid_loss)
+        
+        np.savetxt('Results/discriminator_{}__train_loss.txt'.format(self.model_name), X = self.train_losses)
+        np.savetxt('Results/discriminator_{}__validation_loss.txt'.format(self.model_name), X = self.val_losses)
+        self.push_to_repo()
 
     def training(self, X_train, y_train):
         '''
@@ -133,13 +133,6 @@ class Discriminator_utility():
             loss.backward()
             self.optimiser.step()
             epoch_loss += loss.item()
-            time_2 = time.time()
-            if (time_2 - self.time_1) > 120:
-                print("Epoch {:.0f} - Intermediate loss {:.3f} after {:.2f} % of training examples.".format(self.epoch,
-                                                                                                      epoch_loss / batch,
-                                                                                                      100 * batch / self.n_batches))
-                print('Total time {:.1f} s.'.format(time.time()- self.start_time))
-                self.time_1 = time.time()
         return epoch_loss / self.n_batches
 
     def evaluation(self, X_test, y_test):
@@ -246,9 +239,9 @@ class Discriminator_utility():
 
         """
         try:
-            self.model.load_state_dict(torch.load(
-                "../data/Results/discriminator_{}.pth".format(self.grid['model_name'])))
+            self.model.load_state_dict(torch.load("../data/Results/discriminator_{}.pth".format(self.grid['model_name'])))
             self.model.eval()
+            self.m = copy.deepcopy(self.model)
         except:
             pass
 
