@@ -83,37 +83,4 @@ class _CNN_text_clf(nn.Module):
 
         # nn.BCEWithLogitsLoss will apply sigmoid activation internally
         x = self.fc(x)
-        return x
-
-
-if __name__ == "__main__":
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # toy example
-    all_grid = {'max_epochs': 64,
-                'seq_len': 10,
-                'learning_rate': 1e-3,
-                'batch_size': 20,
-                'embed_dim': 100,
-                'drop_out': 0,
-                'kernel_num': 5,
-                'in_channel': 1,  # for text this should be one
-                'parallel_layer': 3,
-                'device': device
-                }
-    # grid, model, optimiser, lossfunction = Discriminator_utility.instan_things(
-    #     **all_grid)
-
-    # to make a desirable toy input
-    # x = torch.rand(grid['seq_len'],
-    #                grid['batch_size'], grid['embed_dim']).unsqueeze(0)
-
-    # y = torch.ones(grid['batch_size'], 1).unsqueeze(0)
-    # generator = zip(x, y)
-    # for i, j in generator:
-    #     print(i.size())
-    #     print(j.size())
-
-    # print(Discriminator_utility.training(
-    #     model, generator, optimiser, lossfunction))
+        return F.softmax(x)

@@ -72,6 +72,7 @@ class Discriminator_utility():
         best_valid_loss = float('inf')
         self.n_batches = np.ceil(X_train.shape[0] / self.grid['batch_size'])
         self.n_batches_test = np.ceil(X_test.shape[0] / self.grid['batch_size'])
+        self.train_losses, self.val_losses = [], []
         
         # measure the time of training
         self.start_time = time.time()        
@@ -87,12 +88,14 @@ class Discriminator_utility():
 
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
-                m = copy.deepcopy(self.model)
-                print(f'Epoch: {epoch+1}:')
-                print(f'Train Loss: {train_loss:.3f}')
-                print(f'Validation Loss: {valid_loss:.3f}')
-
-        return best_valid_loss, m
+                self.m = copy.deepcopy(self.model)
+                self.save()
+            print(f'Epoch: {epoch+1}:')
+            print(f'Train Loss: {train_loss:.3f}')
+            print(f'Validation Loss: {valid_loss:.3f}')
+            # save losses
+            self.train_losses.append(train_loss)
+            self.val_losses.append(valid_loss)
 
     def training(self, X_train, y_train):
         '''
@@ -149,7 +152,7 @@ class Discriminator_utility():
                 local_batch  -> [batch_size, seq_len]
                 local_labels -> [batch_size,] boolean
         '''
-        self.model.eval()
+        self.m.eval()
         epoch_loss = 0
         for local_batch, local_labels in self._generate_batches(X_test, y_test):
             #
@@ -158,11 +161,34 @@ class Discriminator_utility():
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
 
-            local_output = self.model(local_batch_embedded)
+            local_output = self.m(local_batch_embedded)
             
             loss = self.lossfunction(local_output, local_labels)
             epoch_loss += loss.item()
         return epoch_loss / self.n_batches_test
+    
+    def evaluation(self, X_test, y_test):
+        '''
+        Args:
+            X_test -> [N_samples,seq_len]; word index array
+            y_test -> [N_samples,]; boolean, long type, 1d tensor
+
+            output batches:
+                local_batch  -> [batch_size, seq_len]
+                local_labels -> [batch_size,] boolean
+        '''
+        self.m.eval()
+        epoch_loss = 0
+        for local_batch, local_labels in self._generate_batches(X_test, y_test):
+            #
+            local_batch, local_labels = local_batch.to(self.device), local_labels.flatten().to(self.device)
+            # pass through embedding layer
+            local_batch_embedded = self._embedding_layer(local_batch)
+            # -> [batch_size,seq_len,emb_dim]
+
+            local_output = self.m(local_batch_embedded)
+            
+        return local_output.argmax(0)
 
     def _embedding_layer(self, x):
         '''
@@ -208,8 +234,7 @@ class Discriminator_utility():
         Args:
 
         """
-        torch.save(self.model.state_dict(),
-                   "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
+        torch.save(self.m.state_dict(), "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
 
     def load(self):
         """
