@@ -188,7 +188,7 @@ class Discriminator_utility():
 
             local_output = self.m(local_batch_embedded)
             local_output = local_output.detach().cpu().numpy()
-            outputs_true += (local_output == local_labels).float()
+            outputs_true += sum(local_output == local_labels).float()
         return outputs_true / y_test.shape[0]
 
     def _embedding_layer(self, x):
