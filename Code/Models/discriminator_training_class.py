@@ -101,12 +101,10 @@ class Discriminator_utility():
         epoch_loss = 0
         for local_batch, local_labels in self._generate_batches(X_train, y_train):
             
+            local_batch, local_labels = local_batch.to(self.device), local_labels.flatten().to(self.device)
             # pass through embedding layer
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
-
-            local_batch_embedded, local_labels = local_batch_embedded.to(
-                self.device), local_labels.flatten().to(self.device)
 
             # print('input are:')
             # print(local_batch.size())
