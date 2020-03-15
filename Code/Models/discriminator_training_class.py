@@ -222,7 +222,7 @@ class Discriminator_utility():
             pass
         else:
             summary_bag = torch.from_numpy(summary_bag).long()
-            label = torch.from_numpy(label).long()
+            label = torch.from_numpy(label)
 
         label = label.view(-1, 1)  # to 1d column
         l = len(summary_bag)
