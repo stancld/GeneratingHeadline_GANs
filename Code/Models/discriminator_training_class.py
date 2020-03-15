@@ -69,7 +69,9 @@ class Discriminator_utility():
                 y_test [N_samples,] -> boolean tensor 
         '''
         best_valid_loss = float('inf')
-
+        self.n_batches = np.ceil(X_train.shape[0] / self.grid['batch_size'])
+        self.n_batches_test = np.ceil(X_test.shape[0] / self.grid['batch_size'])
+        
         for epoch in range(self.grid['max_epochs']):
 
             train_loss = self.training(X_train, y_train)
@@ -110,7 +112,9 @@ class Discriminator_utility():
             # print(local_labels.size())
 
             self.optimiser.zero_grad()
-            local_output = self.model(local_batch_embedded)
+            local_output = F.softmax(
+                self.model(local_batch_embedded)
+                )
 
             # print('output are:')
             # print(local_output.size())
@@ -120,7 +124,7 @@ class Discriminator_utility():
             loss.backward()
             self.optimiser.step()
             epoch_loss += loss.item()
-        return epoch_loss
+        return epoch_loss / self.n_bacthes
 
     def evaluation(self, X_test, y_test):
         '''
@@ -143,11 +147,13 @@ class Discriminator_utility():
             local_batch, local_labels = local_batch.to(
                 self.device), local_labels.flatten().to(self.device)
 
-            local_output = self.model(local_batch_embedded)
-
+            local_output = F.softmax(
+                self.model(local_batch_embedded)
+                )
+            
             loss = self.lossfunction(local_output, local_labels)
             epoch_loss += loss.item()
-        return epoch_loss
+        return epoch_loss / self.n_batches_test
 
     def _embedding_layer(self, x):
         '''
