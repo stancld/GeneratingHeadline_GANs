@@ -93,6 +93,14 @@ class Discriminator_utility():
             # save losses
             self.train_losses.append(train_loss)
             self.val_losses.append(valid_loss)
+            if epoch >= 2:
+                if self.train_losses[epoch] > self.train_losses[epoch-2]:
+                    np.savetxt('Results/discriminator_{}__train_loss.txt'.format(self.model_name), X = self.train_losses)
+                    np.savetxt('Results/discriminator_{}__validation_loss.txt'.format(self.model_name), X = self.val_losses)
+                    self.push_to_repo()
+
+                    statement = "The model has converged after {:.0f} epochs.".format(epoch+1)
+                    return statement
         
         np.savetxt('Results/discriminator_{}__train_loss.txt'.format(self.model_name), X = self.train_losses)
         np.savetxt('Results/discriminator_{}__validation_loss.txt'.format(self.model_name), X = self.val_losses)
