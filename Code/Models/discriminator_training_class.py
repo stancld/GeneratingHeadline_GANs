@@ -129,7 +129,7 @@ class Discriminator_utility():
             # print(local_output.size())
             # print(local_labels.size())
 
-            loss = self.lossfunction(local_output, local_labels.unsqueeze(1))
+            loss = self.lossfunction(local_output, local_labels)
             loss.backward()
             self.optimiser.step()
             epoch_loss += loss.item()
@@ -163,7 +163,7 @@ class Discriminator_utility():
 
             local_output = self.m(local_batch_embedded)
             
-            loss = self.lossfunction(local_output, local_labels.unsqueeze(1))
+            loss = self.lossfunction(local_output, local_labels)
             epoch_loss += loss.item()
         return epoch_loss / self.n_batches_test
     

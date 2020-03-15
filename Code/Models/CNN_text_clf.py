@@ -82,5 +82,5 @@ class _CNN_text_clf(nn.Module):
         x = self.drop_out(torch.cat((x1, x2, x3), dim=1))
 
         # nn.BCEWithLogitsLoss will apply sigmoid activation internally
-        x = self.fc(x)
+        x = self.fc(x).view(-1,)
         return x
