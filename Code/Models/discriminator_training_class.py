@@ -48,6 +48,7 @@ class Discriminator_utility():
         self.device = kwargs['device']
 
         self.model = _CNN_text_clf(**self.grid).to(self.device)
+        self.m = copy.deepcoy(self.model)
 
         self.embedding_layer = nn.Embedding.from_pretrained(
             torch.from_numpy(embedding).to(self.device), freeze=True).to(self.device)
@@ -185,9 +186,10 @@ class Discriminator_utility():
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
 
-            local_output = self.model(local_batch_embedded).round().numpy()
+            local_output = self.m(local_batch_embedded).round().numpy()
             outputs.append(local_output)
-        return sum(outputs, [])
+        outputs = sum(outputs, [])
+        return sum(outputs == y_test) / y_test.shape[0]
 
     def _embedding_layer(self, x):
         '''
