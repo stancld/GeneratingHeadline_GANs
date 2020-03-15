@@ -124,11 +124,11 @@ class Discriminator_utility():
 
             self.optimiser.zero_grad()
             local_output = self.model(local_batch_embedded)
+            print(local_output)
 
             # print('output are:')
             # print(local_output.size())
             # print(local_labels.size())
-            return local_output, local_labels
             loss = self.lossfunction(local_output, local_labels)
             loss.backward()
             self.optimiser.step()
