@@ -186,7 +186,8 @@ class Discriminator_utility():
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
 
-            local_output = self.m(local_batch_embedded).round().detach.cpu().numpy()
+            local_output = self.m(local_batch_embedded)
+            local_output = local_output.detach.cpu().numpy()
             outputs_true += (local_output == local_labels).float()
         return outputs_true / y_test.shape[0]
 
