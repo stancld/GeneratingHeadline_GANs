@@ -57,7 +57,7 @@ class Discriminator_utility():
 
         # pos_weight = kwargs['pos_weight']
         # All weights are equal to 1 and we have 2 classes
-        self.lossfunction = nn.CrossEntropyLoss().to(self.device)
+        self.lossfunction = nn.BCEWithLogitsLoss().to(self.device)
 
     def run_epochs(self, X_train, y_train, X_test, y_test):
         '''
@@ -152,7 +152,7 @@ class Discriminator_utility():
                 local_batch  -> [batch_size, seq_len]
                 local_labels -> [batch_size,] boolean
         '''
-        self.m.eval()
+        self.model.eval()
         epoch_loss = 0
         for local_batch, local_labels in self._generate_batches(X_test, y_test):
             #

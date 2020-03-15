@@ -41,7 +41,7 @@ class _CNN_text_clf(nn.Module):
                                kernel_size=(5, self.embed_dim)
                                )
         self.fc = nn.Linear(in_features=self.parallel_layer * self.C_out,
-                            out_features=2)
+                            out_features=1)
         self.drop_out = nn.Dropout(kwargs['drop_out'])
         self.device = kwargs['device']
 
@@ -83,4 +83,4 @@ class _CNN_text_clf(nn.Module):
 
         # nn.BCEWithLogitsLoss will apply sigmoid activation internally
         x = self.fc(x)
-        return F.softmax(x,1)
+        return x
