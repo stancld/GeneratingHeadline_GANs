@@ -167,7 +167,7 @@ class Discriminator_utility():
             epoch_loss += loss.item()
         return epoch_loss / self.n_batches_test
     
-    def evaluation(self, X_test, y_test):
+    def predict(self, X_test, y_test):
         '''
         Args:
             X_test -> [N_samples,seq_len]; word index array
@@ -178,7 +178,7 @@ class Discriminator_utility():
                 local_labels -> [batch_size,] boolean
         '''
         self.m.eval()
-        epoch_loss = 0
+        outputs = []
         for local_batch, local_labels in self._generate_batches(X_test, y_test):
             #
             local_batch, local_labels = local_batch.to(self.device), local_labels.flatten().to(self.device)
@@ -186,9 +186,9 @@ class Discriminator_utility():
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
 
-            local_output = self.m(local_batch_embedded)
-            
-        return local_output.argmax(0)
+            local_output = self.model(local_batch_embedded).round().numpy()
+            outputs.append(local_output)
+        return sum(outputs, [])
 
     def _embedding_layer(self, x):
         '''
