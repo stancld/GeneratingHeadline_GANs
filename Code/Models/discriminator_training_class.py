@@ -187,8 +187,10 @@ class Discriminator_utility():
             # -> [batch_size,seq_len,emb_dim]
 
             local_output = self.m(local_batch_embedded)
-            local_output = local_output.round().detach().cpu().numpy()
-            return local_output, local_labels
+            local_output = local_output.detach().cpu().numpy()
+            local_output = np.array(
+                [1 if x>=0 else 0 for x in local_output]
+                )
             outputs_true += sum(local_output == local_labels)
         return float(outputs_true) / y_test.shape[0]
 
