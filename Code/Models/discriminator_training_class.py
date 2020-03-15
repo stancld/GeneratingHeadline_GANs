@@ -149,9 +149,7 @@ class Discriminator_utility():
             local_batch, local_labels = local_batch.to(
                 self.device), local_labels.flatten().to(self.device)
 
-            local_output = F.softmax(
-                self.model(local_batch_embedded)
-                )
+            local_output = self.model(local_batch_embedded)
             
             loss = self.lossfunction(local_output, local_labels)
             epoch_loss += loss.item()
