@@ -26,6 +26,7 @@ class _CNN_text_clf(nn.Module):
         self.C_in = kwargs['in_channel']
         # number of parallel layer in this network
         self.parallel_layer = kwargs['parallel_layer']
+        self.device = kwargs['device']
 
         self.conv1 = nn.Conv2d(in_channels=self.C_in,
                                out_channels=self.C_out,
