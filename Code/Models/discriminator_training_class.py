@@ -48,7 +48,7 @@ class Discriminator_utility():
         self.device = kwargs['device']
 
         self.model = _CNN_text_clf(**self.grid).to(self.device)
-        self.m = copy.deepcoy(self.model)
+        self.m = copy.deepcopy(self.model)
 
         self.embedding_layer = nn.Embedding.from_pretrained(
             torch.from_numpy(embedding).to(self.device), freeze=True).to(self.device)
