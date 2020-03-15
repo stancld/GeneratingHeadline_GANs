@@ -128,7 +128,7 @@ class Discriminator_utility():
             # print('output are:')
             # print(local_output.size())
             # print(local_labels.size())
-
+            return local_output, local_labels
             loss = self.lossfunction(local_output, local_labels)
             loss.backward()
             self.optimiser.step()
