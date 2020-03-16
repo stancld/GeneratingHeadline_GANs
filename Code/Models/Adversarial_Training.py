@@ -255,9 +255,7 @@ class AdversarialTraining:
                 
                 if batch % 50 == 0:
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
-                    
-            
-            return epoch_Loss_D
+                    pass
                 
                 
     
