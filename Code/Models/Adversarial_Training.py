@@ -320,7 +320,7 @@ class AdversarialTraining:
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
                     print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
-                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Discriminator accuracy = {acc:2.f} %.')
+                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Discriminator accuracy = {acc:.2f} %.')
                     self.generator.model.train()
                     self.discriminator.model.train()
             
