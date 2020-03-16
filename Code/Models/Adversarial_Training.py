@@ -231,7 +231,7 @@ class AdversarialTraining:
                 #####
                 self.optimiser_G.zero_grad()
                 # FORWARD pass with updated discriminator
-                output_D, real_labels_flatten = self.discriminator.forward(output_G.permute(1,0), real_labels)
+                output_D, real_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), real_labels)
                 # Compute loss function
                 output_G = F.log_softmax(output_G, dim = 2)
                 
