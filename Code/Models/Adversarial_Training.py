@@ -89,7 +89,7 @@ class AdversarialTraining:
         self.pad_idx = self.grid['headline_dictionary'].word2index['<pad>']
         self.eos_idx = self.grid['headline_dictionary'].word2index['eos']
         
-        self.rouge = Rouge
+        self.rouge = Rouge()
         
     def training(self,
                  X_train, X_train_lengths, y_train, y_train_lengths,
@@ -198,7 +198,7 @@ class AdversarialTraining:
                 ## Compute log(D(x)) using batch of real examples
                 self.optimiser_D.zero_grad()
                 # dicriminator output
-                output_D, real_labels_flatten = self.discriminator.forward(target.T, real_labels) #discriminator needs transpose input
+                output_D, real_labels_flatten = self.discriminator.forward(target.permute(1,0), real_labels) #discriminator needs transpose input
                 # calculate loss function on the batch of real examples
                 error_D_real = self.loss_function_D(output_D, real_labels_flatten)
                 # Calculate gradient
@@ -211,7 +211,7 @@ class AdversarialTraining:
                                                 adversarial = True)
                 output_G = F.log_softmax(output_G, dim = 2).argmax(dim = 2).long()
                 # discriminator output D(G(z))
-                output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.T, fake_labels) #discriminator needs transpose input
+                output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.permute(1,0), fake_labels) #discriminator needs transpose input
                 # calculate loss function on the batch of fake examples
                 error_D_fake = self.loss_function_D(output_D_G, fake_labels_flatten)
                 # calculate gradient
@@ -232,7 +232,7 @@ class AdversarialTraining:
                 #####
                 self.optimiser_G.zero_grad()
                 # FORWARD pass with updated discriminator
-                output_D, real_labels_flatten = self.discriminator.forward(output_G.T, real_labels)
+                output_D, real_labels_flatten = self.discriminator.forward(output_G.permute(1,0), real_labels)
                 # Compute loss function
                 error_G = self.loss_function_G(output_D_G, real_labels_flatten)
                 # Calculate gradient
@@ -246,9 +246,12 @@ class AdversarialTraining:
                 output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                 target = target, teacher_forcing_ratio = 1,
                                                 adversarial = True)
-                hypotheses = output_G.argmax(dim = 2).cpu().numpy()
-                hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses.T]
-                return hypotheses
+                hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
+                hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
+                references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0)]
+                rouge1 = [self.rouge.get_scores(hyp, ref, '1') for hyp, ref in zip(hypotheses, references)]
+                rouge1 = np.array([x for x in rouge1 if x != 'drop']).mean()
+                return rouge1
                 
                 if batch % 50 == 0:
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
