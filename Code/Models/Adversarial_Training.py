@@ -37,8 +37,7 @@ exec(open('Code/Models/discriminator_training_class.py').read())
 class AdversarialTraining:
     """
     """
-    def __init__(self, generator_class, discriminator_class, optimiser_D, optimiser_G,
-                 text_dictionary, embeddings, **kwargs):
+    def __init__(self, generator_class, discriminator_class, optimiser_D, optimiser_G, **kwargs):
         """
         :param generator:
             type:
