@@ -388,7 +388,7 @@ class _Seq2Seq(nn.Module):
         if adversarial == True:
             hidden = hidden_.clone() + Variable(
                 torch.from_numpy(
-                    np.random.normal(0, 0.01, size = hidden.shape)
+                    np.random.normal(0, 0.01, size = hidden_.shape)
                     ), requires_grad = False
                 ).to(self.device)
         else:
