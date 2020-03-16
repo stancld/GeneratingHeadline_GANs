@@ -266,7 +266,7 @@ class AdversarialTraining:
                         ## GENERATOR perfrormance
                         output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                         target = target, teacher_forcing_ratio = 0,
-                                                        adversarial = True)
+                                                        adversarial = False)
                         hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
                         hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
                         references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
