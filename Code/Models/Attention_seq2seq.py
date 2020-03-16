@@ -382,17 +382,17 @@ class _Seq2Seq(nn.Module):
 
         # encoder_outputs is all hidden states of the input sequence, back and forwards
         # hidden is the final forward and backward hidden states, passed through a linear layer
-        encoder_outputs, hidden = self.encoder(seq2seq_input, input_lengths)
+        encoder_outputs, hidden_ = self.encoder(seq2seq_input, input_lengths)
         
         # introduce noise if adversarial = True
         if adversarial == True:
-            hidden += Variable(
+            hidden = hidden_.clone() + Variable(
                 torch.from_numpy(
                     np.random.normal(0, 0.01, size = hidden.shape)
                     ), requires_grad = False
                 ).to(self.device)
         else:
-            pass
+            hidden = hidden_
         
         # check: make dimension consistent
         dec_input = target[0]
