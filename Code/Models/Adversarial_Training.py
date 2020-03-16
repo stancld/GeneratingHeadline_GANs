@@ -66,7 +66,7 @@ class AdversarialTraining:
                      'batch_size': kwargs['batch_size'],
                      'learning_rate_D': kwargs['learning_rate_D'],
                      'learning_rate_G': kwargs['learning_rate_G'],
-                     'G_multiple': kwargs['G_multiple']
+                     'G_multiple': kwargs['G_multiple'],
                      'l2_reg': kwargs['l2_reg'],
                      'clip': kwargs['clip'],    
                      'model_name': kwargs['model_name'],
