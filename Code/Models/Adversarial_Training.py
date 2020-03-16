@@ -66,6 +66,7 @@ class AdversarialTraining:
                      'batch_size': kwargs['batch_size'],
                      'learning_rate_D': kwargs['learning_rate_D'],
                      'learning_rate_G': kwargs['learning_rate_G'],
+                     'G_multiple': kwargs['G_multiple']
                      'l2_reg': kwargs['l2_reg'],
                      'clip': kwargs['clip'],    
                      'model_name': kwargs['model_name'],
@@ -229,7 +230,7 @@ class AdversarialTraining:
                 # (2) Update Generator: we maximize log(D(G(z)))
                 # 
                 #####
-                for _ in range(3):
+                for _ in range(self.grid['G_multiple']):
                     self.optimiser_G.zero_grad()
                     # FORWARD pass with updated discriminator
                     output_D, real_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), real_labels)
