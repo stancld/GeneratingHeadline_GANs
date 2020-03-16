@@ -248,7 +248,7 @@ class AdversarialTraining:
                                                 adversarial = True)
                 hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
                 hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
-                references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0)]
+                references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
                 rouge1 = [self.rouge.get_scores(hyp, ref, '1') for hyp, ref in zip(hypotheses, references)]
                 rouge1 = np.array([x for x in rouge1 if x != 'drop']).mean()
                 return rouge1
