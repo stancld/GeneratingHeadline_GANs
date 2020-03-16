@@ -84,8 +84,8 @@ class AdversarialTraining:
         self.optimiser_G_ = optimiser_G
         
     def training(self,
-                 X_train, X_train_lengths, y_train, y_train_lengths, labels_train,
-                 X_val, X_val_lengths, y_val, y_val_lengths, labels_val):
+                 X_train, X_train_lengths, y_train, y_train_lengths,
+                 X_val, X_val_lengths, y_val, y_val_lengths):
         """
         :param X_train:
             type:
