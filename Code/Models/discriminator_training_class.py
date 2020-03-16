@@ -200,7 +200,7 @@ class Discriminator_utility():
         # pass through embedding layer
         X_embedded = self._embedding_layer(X)
         # pass through the model
-        output = self.model(X_embedded)
+        output = self.modelrh(X_embedded)
         
         return output, y
 
@@ -249,6 +249,7 @@ class Discriminator_utility():
 
         """
         torch.save(self.m.state_dict(), "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
+        torch.save(self.model.state_dict(), "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
 
     def load(self):
         """
