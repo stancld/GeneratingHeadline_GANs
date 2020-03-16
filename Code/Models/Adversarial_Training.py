@@ -36,9 +36,8 @@ exec(open('Code/Models/discriminator_training_class.py').read())
 class AdversarialTraining:
     """
     """
-    def __init__(self, generator_class, discriminator_class, loss_function_D,
-                 loss_function_G, optimiser_D, optimiser_G, batch_size,
-                 text_dictionary, embeddings, **kwargs):
+    def __init__(self, generator_class, discriminator_class, optimiser_D, optimiser_G,
+                 batch_size, text_dictionary, embeddings, **kwargs):
         """
         :param generator:
             type:
@@ -67,10 +66,8 @@ class AdversarialTraining:
                      'learning_rate_D': kwargs['learning_rate_D'],
                      'learning_rate_G': kwargs['learning_rate_G'],
                      'l2_reg': kwargs['l2_reg'],
-                     'clip': kwargs['clip'],
-                     'teacher_forcing_ratio': kwargs['teacher_forcing_ratio'],
+                     'clip': kwargs['clip'],    
                      'model_name': kwargs['model_name'],
-                     'gen_disc_ratio': kwargs['gen_disc_ratio']
                      }
         
         # Store essential parameters and objects
@@ -82,7 +79,7 @@ class AdversarialTraining:
         
         self.device = kwargs['device']
         self.loss_function_D = nn.BCEWithLogitsLoss().to(self.device)
-        self.loss_function_G = loss_function_G.to(self.device)
+        self.loss_function_G = 1
         self.optimiser_D_ = optimiser_D
         self.optimiser_G_ = optimiser_G
         
@@ -151,8 +148,8 @@ class AdversarialTraining:
         
         for epoch in range(self.start_epoch, self.grid['max_epochs']):
             # run the training
-            self.generator.train()
-            self.discriminator.train()
+            self.generator.model.train()
+            self.discriminator.model.train()
             epoch_Loss_D = 0
             epoch_Loss_G = 0
             batch = 0
@@ -163,9 +160,9 @@ class AdversarialTraining:
             target_train, target_train_lengths = target_train[reshuffle].squeeze(0), target_train_lengths[reshuffle].squeeze(0)
             
             # Initialize optimise
-            self.optimiser_D = self.optimiser_D_(self.discriminator.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_D'],
+            self.optimiser_D = self.optimiser_D_(self.discriminator.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_D'],
                                                  weight_decay = self.grid['l2_reg'])
-            self.optimiser_G = self.optimiser_G_(self.generator.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_G'],
+            self.optimiser_G = self.optimiser_G_(self.generator.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_G'],
                                                  weight_decay = self.grid['l2_reg'])
             
             for input, target, seq_length_input, seq_length_target, labels in zip(input_train,
