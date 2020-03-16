@@ -184,8 +184,8 @@ class AdversarialTraining:
                 # This is done in two subsequent steps according to https://github.com/soumith/ganhacks
                 #####
                 # create vectors of 1s and 0s representing labels of real and generated/fake summaries
-                real_labels = torch.ones(self.batch_size).to(self.device)
-                fake_labels = torch.zeros(self.batch_size).to(self.device)
+                real_labels = torch.ones(self.grid['batch_size']).to(self.device)
+                fake_labels = torch.zeros(self.grid['batch_size']).to(self.device)
                 
                 
                 ## Compute log(D(x)) using batch of real examples
