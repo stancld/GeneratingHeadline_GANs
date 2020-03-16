@@ -242,8 +242,11 @@ class AdversarialTraining:
                 
                 #### MEASUREMENT ####
                 if batch % 20 == 0:
+                    self.generator.model.eval()
+                    self.discriminator.model.eval()
                     val_batch = 0
                     self.rouge1, self.rouge2, self.rougeL = 0, 0, 0
+                    outputs_true = 0
                     for input, target, seq_length_input, seq_length_target in zip(input_val,
                                                                               target_val,
                                                                               input_val_lengths,
@@ -260,6 +263,7 @@ class AdversarialTraining:
                         ).long().to(self.device)           
                         
                         # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
+                        ## GENERATOR perfrormance
                         output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                         target = target, teacher_forcing_ratio = 0,
                                                         adversarial = True)
@@ -271,12 +275,29 @@ class AdversarialTraining:
                         self.rouge2 += ( (np.array([x[0]['rouge-2']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge2) / val_batch )
                         self.rougeL += ( (np.array([x[0]['rouge-l']['f'] for x in ROUGE if x != 'drop']).mean() - self.rougeL) / val_batch )
                         
+                        ## DISCRIMINATOR performance
+                        output_D, real_labels_flatten = self.discriminator.forward(target.permute(1,0), real_labels) #discriminator needs transpose input
+                        outpud_D = output_D.cpu().numpy()
+                        output_labels = np.array(
+                            [1 if x>=0 else 0 for x in local_output]
+                            )
+                        outputs_true += sum(output_labels == real_labels_flatten)
                         
+                        output_G = F.log_softmax(output_G, dim = 2).argmax(dim = 2).long()
+                        output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.permute(1,0), fake_labels) #discriminator needs transpose input
+                        output_labels = np.array(
+                            [1 if x>=0 else 0 for x in local_output]
+                            )
+                        outputs_true += sum(output_labels == fake_labels_flatten)
+                    
+                    acc = 100 * float(outputs_true) / (2*self.n_batches_val*self.grid['batch_size'])
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
                     print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
-                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f}')
-                    
+                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Discriminator accuracy {acc:2.f}')
+                    self.generator.model.train()
+                    self.discriminator.model.train()
+            
     def rouge_get_scores(self, hyp, ref):
       """
       """
