@@ -91,8 +91,6 @@ class AdversarialTraining:
         
         self.rouge = Rouge()
         
-        self.rouge1, self.rouge2, self.rougeL = 0, 0, 0
-        
     def training(self,
                  X_train, X_train_lengths, y_train, y_train_lengths,
                  X_val, X_val_lengths, y_val, y_val_lengths):
@@ -242,21 +240,37 @@ class AdversarialTraining:
                 # Update step
                 self.optimiser_G.step()
                 
-                
                 #### MEASUREMENT ####
-                # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
-                output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
-                                                target = target, teacher_forcing_ratio = 1,
-                                                adversarial = True)
-                hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
-                hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
-                references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
-                ROUGE = [self.rouge.get_scores(hyp, ref) for hyp, ref in zip(hypotheses, references)]
-                self.rouge1 += ( (np.array([x[0]['rouge-1']['f'] for x in ROUGE]).mean() - self.rouge1) / batch )
-                self.rouge2 += ( (np.array([x[0]['rouge-2']['f'] for x in ROUGE]).mean() - self.rouge2) / batch )
-                self.rougeL += ( (np.array([x[0]['rouge-l']['f'] for x in ROUGE]).mean() - self.rougeL) / batch )
-                
-                if batch % 5 == 0:
+                if batch % 20 == 0:
+                    
+                    self.rouge1, self.rouge2, self.rougeL = 0, 0, 0
+                    for input, target, seq_length_input, seq_length_target in zip(input_val,
+                                                                              target_val,
+                                                                              input_val_lengths,
+                                                                              target_val_lengths,
+                                                                              ):
+                        # Paragraphs
+                        input = torch.from_numpy(
+                            input[:seq_length_input.max()]
+                        ).long()
+                        # Summaries
+                        target = torch.from_numpy(
+                        target[:seq_length_target.max()]
+                        ).long().to(self.device)           
+                        
+                        # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
+                        output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
+                                                        target = target, teacher_forcing_ratio = 1,
+                                                        adversarial = True)
+                        hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
+                        hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
+                        references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
+                        ROUGE = [self.rouge.get_scores(hyp, ref) for hyp, ref in zip(hypotheses, references)]
+                        self.rouge1 += ( (np.array([x[0]['rouge-1']['f'] for x in ROUGE]).mean() - self.rouge1) / batch )
+                        self.rouge2 += ( (np.array([x[0]['rouge-2']['f'] for x in ROUGE]).mean() - self.rouge2) / batch )
+                        self.rougeL += ( (np.array([x[0]['rouge-l']['f'] for x in ROUGE]).mean() - self.rougeL) / batch )
+                        
+                        
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
                     print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
