@@ -247,10 +247,8 @@ class AdversarialTraining:
                                                 target = target, teacher_forcing_ratio = 1,
                                                 adversarial = True)
                 hypotheses = output_G.argmax(dim = 2).cpu().numpy()
+                [' '.join([self.grid['headline_dictinary'].index2word[index] for index in hypothesis if( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses.T]
                 return hypotheses
-                hypotheses = sum(
-                    [[' '.join([self.grid['headline_dictionary'].index2word[index] for index in batch[:, hypothesis] if (index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in range(batch.shape[1])] for batch in hypotheses], []
-                    )
                 
                 if batch % 50 == 0:
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
