@@ -251,7 +251,9 @@ class AdversarialTraining:
                 references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
                 rouge1 = [self.rouge.get_scores(hyp, ref, '1') for hyp, ref in zip(hypotheses, references)]
                 rouge1 = np.array([x for x in rouge1 if x != 'drop']).mean()
-                return rouge1
+                rouge2 = [self.rouge.get_scores(hyp, ref, '2') for hyp, ref in zip(hypotheses, references)]
+                rouge2 = np.array([x for x in rouge1 if x != 'drop']).mean()
+                return rouge1, rouge2
                 
                 if batch % 50 == 0:
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
