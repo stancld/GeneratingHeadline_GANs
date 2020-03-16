@@ -388,6 +388,8 @@ class _Seq2Seq(nn.Module):
             hidden += torch.from_numpy(
                 np.random.normal(0, 0.01, size = hidden.shape)
                 ).to(self.device)
+        else:
+            pass
         
         # check: make dimension consistent
         dec_input = target[0]
