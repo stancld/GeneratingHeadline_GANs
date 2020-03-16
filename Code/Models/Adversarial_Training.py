@@ -28,6 +28,7 @@ import copy
 exec(open('Code/Models/Attention_seq2seq.py').read())
 exec(open('Code/Models/generator_training_class.py').read())
 exec(open('Code/Models/CNN_text_clf.py').read())
+exec(open('Code/Models/discriminator_training_class.py').read())
 
 
 
@@ -80,7 +81,7 @@ class AdversarialTraining:
         self.discriminator = discriminator_class.model
         
         self.device = kwargs['device']
-        self.loss_function_D = loss_function_D.to(self.device)
+        self.loss_function_D = nn.BCEWithLogitsLoss().to(self.device)
         self.loss_function_G = loss_function_G.to(self.device)
         self.optimiser_D_ = optimiser_D
         self.optimiser_G_ = optimiser_G
@@ -194,30 +195,23 @@ class AdversarialTraining:
                 
                 ## Compute log(D(x)) using batch of real examples
                 self.optimiser_D.zero_grad()
-                # embedding
-                target_embedded = self._embedding_layer(target)
                 # dicriminator output
-                output_D = self.discriminator(target_embedded)
+                output_D, real_labels_flatten = self.discriminator.forward(target, real_labels)
                 # calculate loss function on the batch of real examples
-                error_D_real = self.loss_function_D(output_D, real_labels)
+                error_D_real = self.loss_function_D(output_D, real_labels_flatten)
                 # Calculate gradient
                 error_D_real.backward()
-                # cleaning
-                del target_embedded, output_D
-                torch.cuda.empty_cache()
                 
                 ## Compute log(1 - D(G(z)))
                 # Generate summaries
-                output_G = self.generator(seq2seq_input = input, input_lengths = seq_length_input,
-                                          target = target, teacher_forcing_ratio = self.grid['teacher_forcing_ratio'],
-                                          adversarial = True)
+                output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
+                                                target = target, teacher_forcing_ratio = 1,
+                                                adversarial = True)
                 output_G = F.log_softmax(output_G, dim = 2)
-                # embedding
-                output_G = self._embedding_layer(output_G)
                 # discriminator output D(G(z))
-                output_D_G = self.discriminator(output_G)
+                output_D_G, fake_labels_flatten = self.discriminator.forward(output_G, fake_labels)
                 # calculate loss function on the batch of fake examples
-                error_D_fake = self.loss_function_D(output_D_G, fake_labels)
+                error_D_fake = self.loss_function_D(output_D_G, fake_labels_flatten)
                 # calculate gradient
                 error_D_fake.backward()
                 
@@ -227,7 +221,10 @@ class AdversarialTraining:
                 # update step
                 self.optimiser_D.step()
                 
-                # cleaning
+                # cleaning and saving
+                epoch_Loss_D += error_D
+            
+            return epoch_Loss_D
                 
                 
                 

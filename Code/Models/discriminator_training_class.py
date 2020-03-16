@@ -192,6 +192,17 @@ class Discriminator_utility():
                 )
             outputs_true += sum(local_output == local_labels)
         return float(outputs_true) / y_test.shape[0]
+    
+    def forward(self, X, y):
+        """
+        """
+        X, y = X.to(self.device), y.flatten().to(self.device)
+        # pass through embedding layer
+        X_embedded = self._embedding_layer(X)
+        # pass through the model
+        output = self.model(X_embedded)
+        
+        return output, y
 
     def _embedding_layer(self, x):
         '''
