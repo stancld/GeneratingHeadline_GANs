@@ -281,7 +281,7 @@ class AdversarialTraining:
                         output_labels = np.array(
                             [1 if x>=0 else 0 for x in outpud_D]
                             )
-                        outputs_true += sum(output_labels == real_labels_flatten)
+                        outputs_true += sum(output_labels == real_labels_flatten.cpu().numpy())
                         
                         output_G = F.log_softmax(output_G, dim = 2).argmax(dim = 2).long()
                         output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.permute(1,0), fake_labels) #discriminator needs transpose input
@@ -289,7 +289,7 @@ class AdversarialTraining:
                         output_labels = np.array(
                             [1 if x>=0 else 0 for x in outpud_D_G]
                             )
-                        outputs_true += sum(output_labels == fake_labels_flatten)
+                        outputs_true += sum(output_labels == fake_labels_flatten.cpu().numpy())
                     
                     acc = 100 * float(outputs_true) / (2*self.n_batches_val*self.grid['batch_size'])
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
