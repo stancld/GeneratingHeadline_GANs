@@ -126,19 +126,17 @@ class AdversarialTraining:
         ### generate batches
         # training data
         (input_train, input_train_lengths,
-         target_train, target_train_lengths,
-         labels_train) = self._generate_batches(padded_input = X_train,
-                                                input_lengths = X_train_lengths,
-                                                padded_target = y_train,
-                                                target_lengths = y_train_lengths)
+         target_train, target_train_lengths) = self._generate_batches(padded_input = X_train,
+                                                                      input_lengths = X_train_lengths,
+                                                                      padded_target = y_train,
+                                                                      target_lengths = y_train_lengths)
     
         # validation data
         (input_val, input_val_lengths,
-         target_val, target_val_lengths,
-         labels_val) = self._generate_batches(padded_input = X_val,
-                                              input_lengths = X_val_lengths,
-                                              padded_target = y_val,
-                                              target_lengths = y_val_lengths)
+         target_val, target_val_lengths) = self._generate_batches(padded_input = X_val,
+                                                                  input_lengths = X_val_lengths,
+                                                                  padded_target = y_val,
+                                                                  target_lengths = y_val_lengths)
         
         # Save number of batches of training and validation sets for a proper computation of losses
         self.n_batches = X_train.shape[0]
@@ -165,12 +163,11 @@ class AdversarialTraining:
             self.optimiser_G = self.optimiser_G_(self.generator.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_G'],
                                                  weight_decay = self.grid['l2_reg'])
             
-            for input, target, seq_length_input, seq_length_target, labels in zip(input_train,
-                                                                                  target_train,
-                                                                                  input_train_lengths,
-                                                                                  target_train_lengths,
-                                                                                  labels_train
-                                                                                  ):
+            for input, target, seq_length_input, seq_length_target in zip(input_train,
+                                                                          target_train,
+                                                                          input_train_lengths,
+                                                                          target_train_lengths,
+                                                                          ):
                 batch += 1
                 # Paragraphs
                 input = torch.from_numpy(
@@ -242,9 +239,6 @@ class AdversarialTraining:
         :param target_lengths:
             type:
             description:
-        :param labels:
-            type:
-            description
             
         :return input_batches:
             type:
@@ -258,9 +252,6 @@ class AdversarialTraining:
         :return target_lengths:
             type:
             description:
-        :return labels_batches:
-            type:
-            description
         """
         # determine a number of batches
         n_batches = padded_input.shape[1] // self.batch_size
@@ -282,10 +273,6 @@ class AdversarialTraining:
         target_lengths = np.array(
             np.split(target_lengths[:(n_batches * self.batch_size)], n_batches, axis = 0)
             )
-        # Split labels
-        labels_batches = np.array(
-            np.split(labels[:(n_batches * self.batch_size)], n_batches, axis = 0)
-            )
         
         """
         # trim sequences in individual batches
@@ -295,8 +282,7 @@ class AdversarialTraining:
         """
         # return prepared data
         return (input_batches, input_lengths,
-                target_batches, target_lengths,
-                labels_batches)
+                target_batches, target_lengths)
     
     def _embedding_layer(self, x):
         '''
