@@ -147,8 +147,8 @@ class AdversarialTraining:
                                                                   target_lengths = y_val_lengths)
         
         # Save number of batches of training and validation sets for a proper computation of losses
-        self.n_batches = X_train.shape[0]
-        self.n_batches_val = X_val.shape[0]
+        self.n_batches = input_train.shape[0]
+        self.n_batches_val = input_val.shape[0]
         # indices for reshuffling data before running each epoch
         input_arr = np.arange(input_train.shape[0])
         
