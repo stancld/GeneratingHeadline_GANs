@@ -279,14 +279,15 @@ class AdversarialTraining:
                         output_D, real_labels_flatten = self.discriminator.forward(target.permute(1,0), real_labels) #discriminator needs transpose input
                         outpud_D = output_D.cpu().numpy()
                         output_labels = np.array(
-                            [1 if x>=0 else 0 for x in local_output]
+                            [1 if x>=0 else 0 for x in outpud_D]
                             )
                         outputs_true += sum(output_labels == real_labels_flatten)
                         
                         output_G = F.log_softmax(output_G, dim = 2).argmax(dim = 2).long()
                         output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.permute(1,0), fake_labels) #discriminator needs transpose input
+                        outpud_D_G = output_D_G.cpu().numpy()
                         output_labels = np.array(
-                            [1 if x>=0 else 0 for x in local_output]
+                            [1 if x>=0 else 0 for x in outpud_D_G]
                             )
                         outputs_true += sum(output_labels == fake_labels_flatten)
                     
