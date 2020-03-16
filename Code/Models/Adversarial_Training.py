@@ -291,6 +291,17 @@ class AdversarialTraining:
             output -> [N_samples,seq_len,embedding_dimension]
         '''
         return self.embedding_layer(x).float()
+    
+    def load(self):
+        """
+        :param name_path:
+            type:
+            description:
+        """
+        try:
+            self.start_epoch = 0
+        except:
+            self.start_epoch = 0
         
         
         
