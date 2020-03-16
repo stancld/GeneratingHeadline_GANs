@@ -584,14 +584,39 @@ for model_size in model_sizes:
 *Plot losses*
 """
 
-fig, ax = plt.subplots(1, 3)
+fig, ax = plt.subplots(1, 3, figsize = (18, 5))
 
 # Loss for 128
-ax[0].plot()
+y = np.loadtxt('Results/generator128__train_loss.txt')
+ax[0].plot(range(1, y.shape[0]+1), y, label = 'Train. loss')
+y = np.loadtxt('Results/generator128__validation_loss.txt')
+ax[0].plot(range(1, y.shape[0]+1), y, label = 'Val. loss')
+ax[0].legend()
+ax[0].set_xlabel('Epochs')
+ax[0].set_ylabel('Cross-Entropy loss')
+ax[0].set_title(f'Model size = 128, Min validation loss = {y.min():.3f}')
 
 # Loss for 256
+y = np.loadtxt('Results/generator256__train_loss.txt')
+ax[1].plot(range(1, y.shape[0]+1), y, label = 'Train. loss')
+y = np.loadtxt('Results/generator256__validation_loss.txt')
+ax[1].plot(range(1, y.shape[0]+1), y, label = 'Val. loss')
+ax[1].legend()
+ax[1].set_xlabel('Epochs')
+ax[1].set_ylabel('Cross-Entropy loss')
+ax[1].set_title(f'Model size = 256, Min validation loss = {y.min():.3f}')
 
 # Loss for 512
+y = np.loadtxt('Results/generator512__train_loss.txt')
+ax[2].plot(range(1, y.shape[0]+1), y, label = 'Train. loss')
+y = np.loadtxt('Results/generator512__validation_loss.txt')
+ax[2].plot(range(1, y.shape[0]+1), y, label = 'Val. loss')
+ax[2].legend()
+ax[2].set_xlabel('Epochs')
+ax[2].set_ylabel('Cross-Entropy loss')
+ax[2].set_title(f'Model size = 512, Min validation loss = {y.min():.3f}')
+
+plt.tight_layout()
 
 """## **3.2 Generator - Generating summaries**
 
@@ -843,7 +868,7 @@ X_train, y_train = torch.from_numpy(real_fake_train[:, 1:]).long(), torch.from_n
 X_val, y_val = torch.from_numpy(real_fake_val[:, 1:]).long(), torch.from_numpy(real_fake_val[:, 0]).long()
 
 best_val_loss = float('inf')
-for n_kernels in [10, 20, 30, 50]:
+for n_kernels in [10, 20, 30, 50, 100]:
   for dropout in [0.0, 0.2, 0.3, 0.5]:
     param = {'max_epochs': 80,
             'learning_rate': 5e-4,
@@ -871,8 +896,52 @@ for n_kernels in [10, 20, 30, 50]:
 
 print(f'The best performing model has {best_n_kernels:.0f} with drop. prob. {best_dropout:.1f} and performin loss of {best_val_loss:.3f} on validation data.')
 
-# code for the training class (generator)
-run Code/Models/discriminator_training_class.py
+"""*Depic losses for individual models*"""
 
-!git pull origin master
+y = np.loadtxt('Results/discriminator_n_10_d_3__validation_loss.txt')
+plt.plot(range(1, y.shape[0]+1), y, label = 'Val. loss')
 
+y = np.loadtxt('Results/discriminator_n_10_d_3__train_loss.txt')
+plt.plot(range(1, y.shape[0]+1), y, label = 'Train. loss')
+
+plt.legend()
+
+plt.tight_layout()
+
+fig, ax = plt.subplots(5, 4, figsize = (22, 17))
+
+for n_kernels, i in zip([10, 20, 30, 50, 100], range(5)):
+  for dropout, j in zip([0.0, 0.2, 0.3, 0.5], range(4)):
+    try:
+      y = np.loadtxt(f'Results/discriminator_n_{n_kernels:.0f}_d_{10*dropout:.0f}__train_loss.txt')
+      ax[i, j].plot(range(1, y.shape[0]+1), y, label = 'Train. loss')
+      y = np.loadtxt(f'Results/discriminator_n_{n_kernels:.0f}_d_{10*dropout:.0f}__validation_loss.txt')
+      ax[i, j].plot(range(1, y.shape[0]+1), y, label = 'Val. loss')
+
+      ax[i,j].set_xlabel('Epochs')
+      ax[i,j].set_ylabel('Bin. Cross-Entropy')
+      ax[i,j].set_title(f'Min. validation loss = {y.min():.3f}')
+      ax[i,j].legend()
+    except:
+      pass
+
+for a, prob in zip(ax[0], [0.0, 0.2, 0.3, 0.5]):
+    a.annotate(f'Dropout = {prob:.1f}', xy=(0.5, 1.2), xytext=(0, 5),
+                xycoords='axes fraction', textcoords='offset points',
+                size='large', ha='center', va='baseline')
+
+for a, filters in zip(ax[:,0], [10, 20, 30, 50, 100]):
+    a.annotate(f'Kernels = {filters:.0f}', xy=(-0.2, 0.5), xytext=(-5, 0),
+                xycoords='axes fraction', textcoords='offset points',
+                size='large', ha='right', va='center')
+
+plt.tight_layout()
+
+
+
+"""## **3.5 ADVERSARIAL TRAINING**
+
+<hr>
+
+**Description:**
+"""
