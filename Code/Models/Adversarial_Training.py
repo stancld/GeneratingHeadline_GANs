@@ -37,7 +37,7 @@ class AdversarialTraining:
     """
     """
     def __init__(self, generator_class, discriminator_class, optimiser_D, optimiser_G,
-                 batch_size, text_dictionary, embeddings, **kwargs):
+                 text_dictionary, embeddings, **kwargs):
         """
         :param generator:
             type:
