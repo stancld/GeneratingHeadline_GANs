@@ -204,7 +204,7 @@ class AdversarialTraining:
                                                 adversarial = True)
                 output_G = F.log_softmax(output_G, dim = 2).argmax(dim = 2).long()
                 # discriminator output D(G(z))
-                output_D_G, fake_labels_flatten = self.discriminator.forward(output_G, fake_labels)
+                output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.T, fake_labels) #discriminator needs transpose input
                 # calculate loss function on the batch of fake examples
                 error_D_fake = self.loss_function_D(output_D_G, fake_labels_flatten)
                 # calculate gradient
