@@ -147,8 +147,8 @@ class AdversarialTraining:
         
         for epoch in range(self.start_epoch, self.grid['max_epochs']):
             # run the training
-            self.generator.model.train()
-            self.discriminator.model.train()
+            self.generator.train()
+            self.discriminator.train()
             epoch_Loss_D = 0
             epoch_Loss_G = 0
             batch = 0
@@ -159,9 +159,9 @@ class AdversarialTraining:
             target_train, target_train_lengths = target_train[reshuffle].squeeze(0), target_train_lengths[reshuffle].squeeze(0)
             
             # Initialize optimise
-            self.optimiser_D = self.optimiser_D_(self.discriminator.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_D'],
+            self.optimiser_D = self.optimiser_D_(self.discriminator.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_D'],
                                                  weight_decay = self.grid['l2_reg'])
-            self.optimiser_G = self.optimiser_G_(self.generator.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_G'],
+            self.optimiser_G = self.optimiser_G_(self.generator.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_G'],
                                                  weight_decay = self.grid['l2_reg'])
             
             for input, target, seq_length_input, seq_length_target in zip(input_train,
