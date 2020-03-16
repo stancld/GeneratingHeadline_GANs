@@ -246,7 +246,7 @@ class AdversarialTraining:
                 output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                 target = target, teacher_forcing_ratio = 1,
                                                 adversarial = True)
-                hypotheses = F.argmax(dim = 2).cpu().numpy()
+                hypotheses = output_G.argmax(dim = 2).cpu().numpy()
                 return hypotheses
                 hypotheses = sum(
                     [[' '.join([self.grid['headline_dictionary'].index2word[index] for index in batch[:, hypothesis] if (index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in range(batch.shape[1])] for batch in hypotheses], []
