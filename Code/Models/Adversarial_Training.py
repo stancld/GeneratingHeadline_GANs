@@ -70,7 +70,7 @@ class AdversarialTraining:
                      'clip': kwargs['clip'],    
                      'model_name': kwargs['model_name'],
                      'text_dictionary': kwargs['text_dictionary'],
-                     'headline_dictionary': kwarhs['headline_dictionary']
+                     'headline_dictionary': kwargs['headline_dictionary']
                      }
         
         # Store essential parameters and objects
