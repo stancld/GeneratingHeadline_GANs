@@ -292,6 +292,7 @@ class AdversarialTraining:
                         outputs_true += sum(output_labels == fake_labels_flatten.cpu().numpy())
                     
                     acc = 100 * float(outputs_true) / (2*self.n_batches_val*self.grid['batch_size'])
+                    return acc
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
                     print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
