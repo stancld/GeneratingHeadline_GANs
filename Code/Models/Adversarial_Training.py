@@ -23,6 +23,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import copy
+from rouge import Rouge
 
 # Run model codes
 exec(open('Code/Models/Attention_seq2seq.py').read())
@@ -69,6 +70,8 @@ class AdversarialTraining:
                      'l2_reg': kwargs['l2_reg'],
                      'clip': kwargs['clip'],    
                      'model_name': kwargs['model_name'],
+                     'text_dictionary': kwargs['text_dictionary'],
+                     'headline_dictionary': kwarhs['headline_dictionary']
                      }
         
         # Store essential parameters and objects
@@ -80,9 +83,14 @@ class AdversarialTraining:
         
         self.device = kwargs['device']
         self.loss_function_D = nn.BCEWithLogitsLoss().to(self.device)
-        self.loss_function_G = 1
+        self.loss_function_G = nn.BCEWithLogitsLoss().to(self.device)
         self.optimiser_D_ = optimiser_D
         self.optimiser_G_ = optimiser_G
+        
+        self.pad_idx = self.grid['headline_dictionary']['<pad>']
+        self.eos_idx = self.grid['headline_dictionary']['eos']
+        
+        self.rouge = Rouge
         
     def training(self,
                  X_train, X_train_lengths, y_train, y_train_lengths,
@@ -218,6 +226,36 @@ class AdversarialTraining:
                 
                 # cleaning and saving
                 epoch_Loss_D += error_D
+                
+                #####
+                # (2) Update Generator: we maximize log(D(G(z)))
+                # 
+                #####
+                self.optimiser_G.zero_grad()
+                # FORWARD pass with updated discriminator
+                output_D, real_labels_flatten = self.discriminator.forward(output_G.T, real_labels)
+                # Compute loss function
+                error_G = self.loss_function_G(output_D_G, real_labels_flatten)
+                # Calculate gradient
+                error_G.backward()
+                # Update step
+                self.optimiser_G.step()
+                
+                
+                #### MEASUREMENT ####
+                # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
+                output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
+                                                target = target, teacher_forcing_ratio = 1,
+                                                adversarial = True)
+                hypotheses = F.argmax(dim = 2).cpu().numpy()
+                return hypotheses
+                hypotheses = sum(
+                    [[' '.join([self.grid['headline_dictionary'].index2word[index] for index in batch[:, hypothesis] if (index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in range(batch.shape[1])] for batch in hypotheses], []
+                    )
+                
+                if batch % 50 == 0:
+                    # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
+                    
             
             return epoch_Loss_D
                 
