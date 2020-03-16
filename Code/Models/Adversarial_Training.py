@@ -242,13 +242,14 @@ class AdversarialTraining:
                 
                 #### MEASUREMENT ####
                 if batch % 20 == 0:
-                    
+                    val_batch = 0
                     self.rouge1, self.rouge2, self.rougeL = 0, 0, 0
                     for input, target, seq_length_input, seq_length_target in zip(input_val,
                                                                               target_val,
                                                                               input_val_lengths,
                                                                               target_val_lengths,
                                                                               ):
+                        val_batch += 1
                         # Paragraphs
                         input = torch.from_numpy(
                             input[:seq_length_input.max()]
@@ -266,9 +267,9 @@ class AdversarialTraining:
                         hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
                         references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
                         ROUGE = [self.rouge_get_scores(hyp, ref) for hyp, ref in zip(hypotheses, references)]
-                        self.rouge1 += ( (np.array([x[0]['rouge-1']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge1) / batch )
-                        self.rouge2 += ( (np.array([x[0]['rouge-2']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge2) / batch )
-                        self.rougeL += ( (np.array([x[0]['rouge-l']['f'] for x in ROUGE if x != 'drop']).mean() - self.rougeL) / batch )
+                        self.rouge1 += ( (np.array([x[0]['rouge-1']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge1) / val_batch )
+                        self.rouge2 += ( (np.array([x[0]['rouge-2']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge2) / val_batch )
+                        self.rougeL += ( (np.array([x[0]['rouge-l']['f'] for x in ROUGE if x != 'drop']).mean() - self.rougeL) / val_batch )
                         
                         
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
