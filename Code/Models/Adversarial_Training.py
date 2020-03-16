@@ -91,6 +91,8 @@ class AdversarialTraining:
         
         self.rouge = Rouge()
         
+        self.rouge1, self.rouge2, self.rougeL = 0, 0, 0
+        
     def training(self,
                  X_train, X_train_lengths, y_train, y_train_lengths,
                  X_val, X_val_lengths, y_val, y_val_lengths):
@@ -249,13 +251,16 @@ class AdversarialTraining:
                 hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
                 hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
                 references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
-                rouge1 = [self.rouge.get_scores(hyp, ref) for hyp, ref in zip(hypotheses, references)]
-                return rouge1
+                ROUGE = [self.rouge.get_scores(hyp, ref) for hyp, ref in zip(hypotheses, references)]
+                self.rouge1 += ( (np.array([x[0]['rouge-1']['f'] for x in ROUGE]).mean() - self.rouge1) / batch )
+                self.rouge2 += ( (np.array([x[0]['rouge-2']['f'] for x in ROUGE]).mean() - self.rouge2) / batch )
+                self.rougeL += ( (np.array([x[0]['rouge-l']['f'] for x in ROUGE]).mean() - self.rougeL) / batch )
                 
-                if batch % 50 == 0:
+                if batch % 5 == 0:
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
-                    pass
-                
+                    print(f'Epoch: {epoch+1:.0f}')
+                    print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
+                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f}')
                 
     
     def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths):
