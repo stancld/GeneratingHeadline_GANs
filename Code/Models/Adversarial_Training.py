@@ -232,6 +232,11 @@ class AdversarialTraining:
                 #####
                 for _ in range(self.grid['G_multiple']):
                     self.optimiser_G.zero_grad()
+                    if _ != 0:
+                        # Generate summaries
+                        output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
+                                                        target = target, teacher_forcing_ratio = 1,
+                                                        adversarial = False)
                     # FORWARD pass with updated discriminator
                     output_D, real_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), real_labels)
                     # Compute loss function
