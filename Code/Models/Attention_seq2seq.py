@@ -402,8 +402,8 @@ class _Seq2Seq(nn.Module):
             # insert dec_input token embedding, previous hidden state and all encoder hidden states
             # receive output tensor (predictions) and new hidden state
             #output, hidden = self.decoder(dec_input, hidden, encoder_outputs)
+            print(dec_input.dtype, hidden.dtype, encoder_outputs.dtype)
             output, hidden, a_ = self.decoder(dec_input, hidden.double(), encoder_outputs, mask)
-            print('auu3')
             # cleaning
             del a_
             # place predictions in a tensor holding predictions for each token
