@@ -229,40 +229,41 @@ class AdversarialTraining:
                 # (2) Update Generator: we maximize log(D(G(z)))
                 # 
                 #####
-                self.optimiser_G.zero_grad()
-                # FORWARD pass with updated discriminator
-                output_D, real_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), real_labels)
-                # Compute loss function
-                output_G = F.log_softmax(output_G, dim = 2)
-                
-                # Pack output and target padded sequence
-                ## Determine a length of output sequence based on the first occurrence of <eos>
-                seq_length_output = (output_G.argmax(2) == self.grid['text_dictionary'].word2index['eos']).int().argmax(0).cpu().numpy()
-                seq_length_output += 1
-                                    
-                # determine seq_length for computation of loss function based on max(seq_lenth_target, seq_length_output)
-                seq_length_loss = np.array(
-                    (seq_length_output, seq_length_target)
-                    ).max(0)
-                
-                output_G = nn.utils.rnn.pack_padded_sequence(output_G,
-                                                           lengths = seq_length_loss,
-                                                           batch_first = False,
-                                                           enforce_sorted = False).to(self.device)
-                
-                target = nn.utils.rnn.pack_padded_sequence(target,
-                                                           lengths = seq_length_loss,
-                                                           batch_first = False,
-                                                           enforce_sorted = False).to(self.device)
-                
-                # Compute loss
-                error_G_2 = self.loss_function_G(output_G[0], target[0])
-                error_G_1 = self.loss_function_D(output_D_G, real_labels_flatten)
-                error_G = error_G_1 * error_G_2
-                # Calculate gradient
-                error_G.backward()
-                # Update step
-                self.optimiser_G.step()
+                for _ in range(3):
+                    self.optimiser_G.zero_grad()
+                    # FORWARD pass with updated discriminator
+                    output_D, real_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), real_labels)
+                    # Compute loss function
+                    output_G = F.log_softmax(output_G, dim = 2)
+                    
+                    # Pack output and target padded sequence
+                    ## Determine a length of output sequence based on the first occurrence of <eos>
+                    seq_length_output = (output_G.argmax(2) == self.grid['text_dictionary'].word2index['eos']).int().argmax(0).cpu().numpy()
+                    seq_length_output += 1
+                                        
+                    # determine seq_length for computation of loss function based on max(seq_lenth_target, seq_length_output)
+                    seq_length_loss = np.array(
+                        (seq_length_output, seq_length_target)
+                        ).max(0)
+                    
+                    output_G = nn.utils.rnn.pack_padded_sequence(output_G,
+                                                               lengths = seq_length_loss,
+                                                               batch_first = False,
+                                                               enforce_sorted = False).to(self.device)
+                    
+                    target = nn.utils.rnn.pack_padded_sequence(target,
+                                                               lengths = seq_length_loss,
+                                                               batch_first = False,
+                                                               enforce_sorted = False).to(self.device)
+                    
+                    # Compute loss
+                    error_G_2 = self.loss_function_G(output_G[0], target[0])
+                    error_G_1 = self.loss_function_D(output_D_G, real_labels_flatten)
+                    error_G = error_G_1 * error_G_2
+                    # Calculate gradient
+                    error_G.backward()
+                    # Update step
+                    self.optimiser_G.step()
                 
                 #### MEASUREMENT ####
                 if batch % 20 == 0:
