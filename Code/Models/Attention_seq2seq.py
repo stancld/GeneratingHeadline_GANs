@@ -385,7 +385,9 @@ class _Seq2Seq(nn.Module):
         
         # introduce noise if adversarial = True
         if adversarial == True:
-            pass
+            hidden += torch.from_numpy(
+                np.random.normal(0, 0.01, size = hidden.shape)
+                ).to(self.device)
         
         # check: make dimension consistent
         dec_input = target[0]
