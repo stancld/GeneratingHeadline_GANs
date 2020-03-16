@@ -383,15 +383,15 @@ class _Seq2Seq(nn.Module):
         # encoder_outputs is all hidden states of the input sequence, back and forwards
         # hidden is the final forward and backward hidden states, passed through a linear layer
         encoder_outputs, hidden_ = self.encoder(seq2seq_input, input_lengths)
-        print('auu1')
+        
         # introduce noise if adversarial = True
         if adversarial == True:
-            hidden = hidden_.double().clone() + torch.from_numpy(
+            hidden = hidden_.clone() + torch.from_numpy(
                 np.random.normal(0, 0.01, size = hidden_.shape)
                 ).to(self.device).double()
         else:
             hidden = hidden_
-        print('auu2')
+        
         # check: make dimension consistent
         dec_input = target[0]
         mask = self.__mask_from_seq_lengths__(input_lengths)
@@ -402,7 +402,7 @@ class _Seq2Seq(nn.Module):
             # insert dec_input token embedding, previous hidden state and all encoder hidden states
             # receive output tensor (predictions) and new hidden state
             #output, hidden = self.decoder(dec_input, hidden, encoder_outputs)
-            output, hidden, a_ = self.decoder(dec_input, hidden, encoder_outputs, mask)
+            output, hidden, a_ = self.decoder(dec_input, hidden.double(), encoder_outputs, mask)
             print('auu3')
             # cleaning
             del a_
