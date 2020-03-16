@@ -82,7 +82,7 @@ class AdversarialTraining:
         
         self.device = kwargs['device']
         self.loss_function_D = nn.BCEWithLogitsLoss().to(self.device)
-        self.loss_function_G = nn.BCEWithLogitsLoss().to(self.device)
+        self.loss_function_G = nn.CrossEntropyLoss().to(self.device)
         self.optimiser_D_ = optimiser_D
         self.optimiser_G_ = optimiser_G
         
@@ -202,16 +202,15 @@ class AdversarialTraining:
                 # calculate loss function on the batch of real examples
                 error_D_real = self.loss_function_D(output_D, real_labels_flatten)
                 # Calculate gradient
-                error_D_real.backward()
+                error_D_real.backward(retain_graph = True)
                 
                 ## Compute log(1 - D(G(z)))
                 # Generate summaries
                 output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                 target = target, teacher_forcing_ratio = 1,
                                                 adversarial = True)
-                output_G = F.log_softmax(output_G, dim = 2).argmax(dim = 2).long()
                 # discriminator output D(G(z))
-                output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.permute(1,0), fake_labels) #discriminator needs transpose input
+                output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), fake_labels) #discriminator needs transpose input
                 # calculate loss function on the batch of fake examples
                 error_D_fake = self.loss_function_D(output_D_G, fake_labels_flatten)
                 # calculate gradient
@@ -234,7 +233,32 @@ class AdversarialTraining:
                 # FORWARD pass with updated discriminator
                 output_D, real_labels_flatten = self.discriminator.forward(output_G.permute(1,0), real_labels)
                 # Compute loss function
-                error_G = self.loss_function_G(output_D_G, real_labels_flatten)
+                output_G = F.log_softmax(output_G, dim = 2)
+                
+                # Pack output and target padded sequence
+                ## Determine a length of output sequence based on the first occurrence of <eos>
+                seq_length_output = (output_G.argmax(2) == self.grid['text_dictionary'].word2index['eos']).int().argmax(0).cpu().numpy()
+                seq_length_output += 1
+                                    
+                # determine seq_length for computation of loss function based on max(seq_lenth_target, seq_length_output)
+                seq_length_loss = np.array(
+                    (seq_length_output, seq_length_target)
+                    ).max(0)
+                
+                output_G = nn.utils.rnn.pack_padded_sequence(output_G,
+                                                           lengths = seq_length_loss,
+                                                           batch_first = False,
+                                                           enforce_sorted = False).to(self.device)
+                
+                target = nn.utils.rnn.pack_padded_sequence(target,
+                                                           lengths = seq_length_loss,
+                                                           batch_first = False,
+                                                           enforce_sorted = False).to(self.device)
+                
+                # Compute loss
+                error_G_2 = self.loss_function(output_G[0], target[0])
+                error_G_1 = self.loss_function_D(output_D_G, real_labels_flatten)
+                error_G = error_G_1 * error_G_2
                 # Calculate gradient
                 error_G.backward()
                 # Update step
@@ -292,11 +316,11 @@ class AdversarialTraining:
                         outputs_true += sum(output_labels == fake_labels_flatten.cpu().numpy())
                     
                     acc = 100 * float(outputs_true) / (2*self.n_batches_val*self.grid['batch_size'])
-                    return acc
+                    
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
                     print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
-                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Discriminator accuracy {acc:2.f}')
+                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Discriminator accuracy = {acc:2.f} %.')
                     self.generator.model.train()
                     self.discriminator.model.train()
             
