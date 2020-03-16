@@ -277,7 +277,7 @@ class AdversarialTraining:
                         
                         ## DISCRIMINATOR performance
                         output_D, real_labels_flatten = self.discriminator.forward(target.permute(1,0), real_labels) #discriminator needs transpose input
-                        outpud_D = output_D.cpu().numpy()
+                        outpud_D = output_D.detach().cpu().numpy()
                         output_labels = np.array(
                             [1 if x>=0 else 0 for x in outpud_D]
                             )
@@ -285,7 +285,7 @@ class AdversarialTraining:
                         
                         output_G = F.log_softmax(output_G, dim = 2).argmax(dim = 2).long()
                         output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.permute(1,0), fake_labels) #discriminator needs transpose input
-                        outpud_D_G = output_D_G.cpu().numpy()
+                        outpud_D_G = output_D_G.detach().cpu().numpy()
                         output_labels = np.array(
                             [1 if x>=0 else 0 for x in outpud_D_G]
                             )
