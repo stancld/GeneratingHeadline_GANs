@@ -200,7 +200,7 @@ class Discriminator_utility():
         # pass through embedding layer
         X_embedded = self._embedding_layer(X)
         # pass through the model
-        output = self.modelrh(X_embedded)
+        output = self.model(X_embedded)
         
         return output, y
 
