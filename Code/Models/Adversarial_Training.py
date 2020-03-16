@@ -215,7 +215,7 @@ class AdversarialTraining:
                 # calculate loss function on the batch of fake examples
                 error_D_fake = self.loss_function_D(output_D_G, fake_labels_flatten)
                 # calculate gradient
-                error_D_fake.backward()
+                error_D_fake.backward(retain_graph = True)
                 
                 # sum gradients from computation both on real and fake examples
                 error_D = error_D_real + error_D_fake
