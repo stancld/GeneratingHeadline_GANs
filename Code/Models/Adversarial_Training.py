@@ -63,6 +63,7 @@ class AdversarialTraining:
         """
         # Grid
         self.grid = {'max_epochs': kwargs['max_epochs'],
+                     'batch_size': kwargs['batch_size'],
                      'learning_rate_D': kwargs['learning_rate_D'],
                      'learning_rate_G': kwargs['learning_rate_G'],
                      'l2_reg': kwargs['l2_reg'],
@@ -221,9 +222,6 @@ class AdversarialTraining:
             return epoch_Loss_D
                 
                 
-                
-    
-    
     
     def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths):
         """
@@ -254,24 +252,24 @@ class AdversarialTraining:
             description:
         """
         # determine a number of batches
-        n_batches = padded_input.shape[1] // self.batch_size
+        n_batches = padded_input.shape[1] // self.grid['batch_size']
         self.n_batches = n_batches
         
         # Generate input and target batches
             #dimension => [total_batchs, seq_length, batch_size, embed_dim], for target embed_dim is irrelevant
                 #seq_length is variable throughout the batches
         input_batches = np.array(
-            np.split(padded_input[:, :(n_batches * self.batch_size)], n_batches, axis = 1)
+            np.split(padded_input[:, :(n_batches * self.grid['batch_size'])], n_batches, axis = 1)
             )
         target_batches = np.array(
-            np.split(padded_target[:, :(n_batches * self.batch_size)], n_batches, axis = 1)
+            np.split(padded_target[:, :(n_batches * self.grid['batch_size'])], n_batches, axis = 1)
             )
         # Split input and target lenghts into batches as well
         input_lengths = np.array(
-            np.split(input_lengths[:(n_batches * self.batch_size)], n_batches, axis = 0)
+            np.split(input_lengths[:(n_batches * self.grid['batch_size'])], n_batches, axis = 0)
             )
         target_lengths = np.array(
-            np.split(target_lengths[:(n_batches * self.batch_size)], n_batches, axis = 0)
+            np.split(target_lengths[:(n_batches * self.grid['batch_size'])], n_batches, axis = 0)
             )
         
         """
