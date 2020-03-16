@@ -266,15 +266,23 @@ class AdversarialTraining:
                         hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
                         references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
                         ROUGE = [self.rouge.get_scores(hyp, ref) for hyp, ref in zip(hypotheses, references)]
-                        self.rouge1 += ( (np.array([x[0]['rouge-1']['f'] for x in ROUGE]).mean() - self.rouge1) / batch )
-                        self.rouge2 += ( (np.array([x[0]['rouge-2']['f'] for x in ROUGE]).mean() - self.rouge2) / batch )
-                        self.rougeL += ( (np.array([x[0]['rouge-l']['f'] for x in ROUGE]).mean() - self.rougeL) / batch )
+                        self.rouge1 += ( (np.array([x[0]['rouge-1']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge1) / batch )
+                        self.rouge2 += ( (np.array([x[0]['rouge-2']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge2) / batch )
+                        self.rougeL += ( (np.array([x[0]['rouge-l']['f'] for x in ROUGE if x != 'drop']).mean() - self.rougeL) / batch )
                         
                         
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
                     print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
                     print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f}')
+                    
+    def rouge_get_scores(self, hyp, ref):
+      """
+      """
+      try:
+        return self.rouge.get_scores(hyp, ref)
+      except:
+        return "drop"
                 
     
     def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths):
