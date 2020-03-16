@@ -71,8 +71,8 @@ class AdversarialTraining:
                      }
         
         # Store essential parameters and objects
-        self.embeddings = nn.Embedding.from_pretrained(
-            torch.from_numpy(embeddings), freeze=True)
+        #self.embeddings = nn.Embedding.from_pretrained(
+        #    torch.from_numpy(embeddings), freeze=True)
         
         self.generator = generator_class.model
         self.discriminator = discriminator_class.model
