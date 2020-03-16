@@ -385,8 +385,10 @@ class _Seq2Seq(nn.Module):
         
         # introduce noise if adversarial = True
         if adversarial == True:
-            hidden += torch.from_numpy(
-                np.random.normal(0, 0.01, size = hidden.shape)
+            hidden += Variable(
+                torch.from_numpy(
+                    np.random.normal(0, 0.01, size = hidden.shape)
+                    ), requires_grad = False
                 ).to(self.device)
         else:
             pass
