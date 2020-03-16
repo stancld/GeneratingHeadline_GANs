@@ -86,8 +86,8 @@ class AdversarialTraining:
         self.optimiser_D_ = optimiser_D
         self.optimiser_G_ = optimiser_G
         
-        self.pad_idx = self.grid['headline_dictionary']['<pad>']
-        self.eos_idx = self.grid['headline_dictionary']['eos']
+        self.pad_idx = self.grid['headline_dictionary'].word2index['<pad>']
+        self.eos_idx = self.grid['headline_dictionary'].word2index['eos']
         
         self.rouge = Rouge
         
