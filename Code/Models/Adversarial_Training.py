@@ -75,8 +75,8 @@ class AdversarialTraining:
         #self.embeddings = nn.Embedding.from_pretrained(
         #    torch.from_numpy(embeddings), freeze=True)
         
-        self.generator = generator_class.model
-        self.discriminator = discriminator_class.model
+        self.generator = generator_class
+        self.discriminator = discriminator_class
         
         self.device = kwargs['device']
         self.loss_function_D = nn.BCEWithLogitsLoss().to(self.device)
@@ -147,8 +147,8 @@ class AdversarialTraining:
         
         for epoch in range(self.start_epoch, self.grid['max_epochs']):
             # run the training
-            self.generator.train()
-            self.discriminator.train()
+            self.generator.model.train()
+            self.discriminator.model.train()
             epoch_Loss_D = 0
             epoch_Loss_G = 0
             batch = 0
@@ -159,9 +159,9 @@ class AdversarialTraining:
             target_train, target_train_lengths = target_train[reshuffle].squeeze(0), target_train_lengths[reshuffle].squeeze(0)
             
             # Initialize optimise
-            self.optimiser_D = self.optimiser_D_(self.discriminator.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_D'],
+            self.optimiser_D = self.optimiser_D_(self.discriminator.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_D'],
                                                  weight_decay = self.grid['l2_reg'])
-            self.optimiser_G = self.optimiser_G_(self.generator.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_G'],
+            self.optimiser_G = self.optimiser_G_(self.generator.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_G'],
                                                  weight_decay = self.grid['l2_reg'])
             
             for input, target, seq_length_input, seq_length_target in zip(input_train,
@@ -191,7 +191,7 @@ class AdversarialTraining:
                 ## Compute log(D(x)) using batch of real examples
                 self.optimiser_D.zero_grad()
                 # dicriminator output
-                output_D, real_labels_flatten = self.discriminator.forward(target, real_labels)
+                output_D, real_labels_flatten = self.discriminator.model.forward(target, real_labels)
                 # calculate loss function on the batch of real examples
                 error_D_real = self.loss_function_D(output_D, real_labels_flatten)
                 # Calculate gradient
