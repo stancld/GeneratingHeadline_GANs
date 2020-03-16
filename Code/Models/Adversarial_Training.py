@@ -225,7 +225,7 @@ class AdversarialTraining:
     
     
     
-    def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths, labels):
+    def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths):
         """
         :param input:
             type:
