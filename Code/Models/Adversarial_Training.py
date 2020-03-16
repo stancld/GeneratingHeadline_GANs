@@ -191,7 +191,7 @@ class AdversarialTraining:
                 ## Compute log(D(x)) using batch of real examples
                 self.optimiser_D.zero_grad()
                 # dicriminator output
-                output_D, real_labels_flatten = self.discriminator.forward(target.T, real_labels) #discriminator needs transpose input
+                output_D, real_labels_flatten = self.discriminator.forward(target.permute(0,1), real_labels) #discriminator needs transpose input
                 # calculate loss function on the batch of real examples
                 error_D_real = self.loss_function_D(output_D, real_labels_flatten)
                 # Calculate gradient
@@ -202,7 +202,7 @@ class AdversarialTraining:
                 output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                 target = target, teacher_forcing_ratio = 1,
                                                 adversarial = True)
-                output_G = F.log_softmax(output_G, dim = 2)
+                output_G = F.log_softmax(output_G, dim = 2).argmax(dim = 2).long()
                 # discriminator output D(G(z))
                 output_D_G, fake_labels_flatten = self.discriminator.forward(output_G, fake_labels)
                 # calculate loss function on the batch of fake examples
