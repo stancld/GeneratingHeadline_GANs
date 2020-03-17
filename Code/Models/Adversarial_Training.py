@@ -303,7 +303,7 @@ class AdversarialTraining:
                         output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                         target = target, teacher_forcing_ratio = 0,
                                                         adversarial = True, noise_std = self.grid['noise_std'])
-                        val_loss += self.validation_loss_eval(output_G, target, seq_length_target)
+                        #val_loss += self.validation_loss_eval(output_G, target, seq_length_target)
                         
                         hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
                         hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
