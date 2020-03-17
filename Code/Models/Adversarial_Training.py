@@ -171,7 +171,7 @@ class AdversarialTraining:
             self.optimiser_D = self.optimiser_D_(self.discriminator.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_D'],
                                                  weight_decay = self.grid['l2_reg'])
             self.optimiser_G = self.optimiser_G_(self.generator.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_G'],
-                                                 weight_decay = self.grid['l2_reg'])
+                                                 weight_decay = 0.0)
             
             for input, target, seq_length_input, seq_length_target in zip(input_train,
                                                                           target_train,
@@ -265,7 +265,7 @@ class AdversarialTraining:
                     
                     # Compute loss
                     error_G_2 = self.loss_function_G(output_G[0], target_padded[0])
-                    error_G_1 = 1 - self.loss_function_D(output_D_G, real_labels_flatten)
+                    error_G_1 = self.loss_function_D(output_D_G, real_labels_flatten)
                     error_G = error_G_1 * error_G_2
                     # Calculate gradient
                     error_G.backward(retain_graph = True)
