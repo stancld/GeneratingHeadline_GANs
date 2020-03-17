@@ -83,8 +83,7 @@ class AdversarialTraining:
         
         self.device = kwargs['device']
         self.loss_function_D = nn.BCEWithLogitsLoss().to(self.device)
-        #self.loss_function_G = nn.CrossEntropyLoss().to(self.device)
-        self.loss_function_G = nn.NLLLoss().to(self.device)
+        self.loss_function_G = nn.CrossEntropyLoss().to(self.device)
         self.optimiser_D_ = optimiser_D
         self.optimiser_G_ = optimiser_G
         
@@ -241,7 +240,7 @@ class AdversarialTraining:
                     # FORWARD pass with updated discriminator
                     output_D, real_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), real_labels)
                     # Compute loss function
-                    output_G = F.log_softmax(output_G, dim = 2)
+                    # output_G = F.log_softmax(output_G, dim = 2) # not necessary in for cross-entropy loss
                     
                     # Pack output and target padded sequence
                     ## Determine a length of output sequence based on the first occurrence of <eos>
