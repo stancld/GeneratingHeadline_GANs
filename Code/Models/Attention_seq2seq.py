@@ -345,7 +345,7 @@ class _Seq2Seq(nn.Module):
                 )
             ).to(self.device)
 
-    def forward(self, seq2seq_input, input_lengths, target, teacher_forcing_ratio=0.5, adversarial = False):
+    def forward(self, seq2seq_input, input_lengths, target, teacher_forcing_ratio=0.5, adversarial = False, noise_std = 0.0):
         """
         :param seq2seq_input:
             type:
@@ -387,7 +387,7 @@ class _Seq2Seq(nn.Module):
         # introduce noise if adversarial = True
         if adversarial == True:
             hidden = hidden_.clone() + torch.from_numpy(
-                np.random.normal(0, 0.01, size = hidden_.shape)
+                np.random.normal(0, noise_std, size = hidden_.shape)
                 ).to(self.device).float()
             hidden = hidden.float()
         else:

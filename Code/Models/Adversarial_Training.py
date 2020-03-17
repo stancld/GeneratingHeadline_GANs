@@ -71,7 +71,8 @@ class AdversarialTraining:
                      'clip': kwargs['clip'],    
                      'model_name': kwargs['model_name'],
                      'text_dictionary': kwargs['text_dictionary'],
-                     'headline_dictionary': kwargs['headline_dictionary']
+                     'headline_dictionary': kwargs['headline_dictionary'],
+                     'noise_std': kwargs['noise_std']
                      }
         
         # Store essential parameters and objects
@@ -209,7 +210,7 @@ class AdversarialTraining:
                 # Generate summaries
                 output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                 target = target, teacher_forcing_ratio = 1,
-                                                adversarial = True)
+                                                adversarial = True, noise_std = self.grid['noise_std'])
                 # discriminator output D(G(z))
                 output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), fake_labels) #discriminator needs transpose input
                 # calculate loss function on the batch of fake examples
@@ -236,7 +237,7 @@ class AdversarialTraining:
                         # Generate summaries
                         output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                         target = target, teacher_forcing_ratio = 1,
-                                                        adversarial = True)
+                                                        adversarial = True, noise_std = self.grid['noise_std'])
                     # FORWARD pass with updated discriminator
                     output_D, real_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), real_labels)
                     # Compute loss function
