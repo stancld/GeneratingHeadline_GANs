@@ -302,7 +302,7 @@ class AdversarialTraining:
                         ## GENERATOR perfrormance
                         output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                         target = target, teacher_forcing_ratio = 0,
-                                                        adversarial = True, noise_std = self.grid['noise_std'])
+                                                        adversarial = False, noise_std = 0)
                         #val_loss += self.validation_loss_eval(output_G, target, seq_length_target)
                         
                         hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
@@ -328,7 +328,8 @@ class AdversarialTraining:
                             [1 if x>=0 else 0 for x in outpud_D_G]
                             )
                         outputs_true += sum(output_labels == fake_labels_flatten.cpu().numpy())
-                    
+                        torch.cuda.empty_cache()
+                        
                     acc = 100 * float(outputs_true) / (2*self.n_batches_val*self.grid['batch_size'])
                     val_loss /= val_batch
                     
@@ -372,7 +373,7 @@ class AdversarialTraining:
                                                    enforce_sorted = False).to(self.device)
     
         loss = self.loss_function_G(output_G[0], target[0])
-        del output_G, target
+        del output_G, target, seq_length_output, seq_length_loss
         torch.cuda.empty_cache()
         return loss
     
