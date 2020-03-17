@@ -271,6 +271,9 @@ class AdversarialTraining:
                     error_G.backward(retain_graph = True)
                     # Update step
                     self.optimiser_G.step()
+                    # cleaning
+                    del output_G, target_padded
+                    torch.cuda.empty_cache()
                 
                 #### MEASUREMENT ####
                 if batch % 20 == 0:
