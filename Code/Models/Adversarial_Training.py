@@ -303,7 +303,7 @@ class AdversarialTraining:
                         output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                         target = target, teacher_forcing_ratio = 0,
                                                         adversarial = False, noise_std = 0)
-                        #val_loss += self.validation_loss_eval(output_G, target, seq_length_target)
+                        val_loss += self.validation_loss_eval(output_G, target, seq_length_target)
                         
                         hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
                         hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
@@ -336,7 +336,7 @@ class AdversarialTraining:
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
                     print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
-                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Cross-Entropy = {val_loss:.3f} |Discriminator accuracy = {acc:.2f} %.')
+                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Cross-Entropy = {val_loss:.3f} | Discriminator accuracy = {acc:.2f} %.')
                     self.generator.model.train()
                     self.discriminator.model.train()
             
