@@ -303,12 +303,12 @@ class AdversarialTraining:
                         output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                         target = target, teacher_forcing_ratio = 0,
                                                         adversarial = False, noise_std = 0)
+                        return self.validation_loss_eval(output_G, target, seq_length_target)
                         val_loss += self.validation_loss_eval(output_G, target, seq_length_target)
                         
                         hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
                         hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
                         references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
-                        torch.cuda.empty_cache() # get out of target from GPU
                         ROUGE = [self.rouge_get_scores(hyp, ref) for hyp, ref in zip(hypotheses, references)]
                         self.rouge1 += ( (np.array([x[0]['rouge-1']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge1) / val_batch )
                         self.rouge2 += ( (np.array([x[0]['rouge-2']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge2) / val_batch )
