@@ -219,7 +219,7 @@ class AdversarialTraining:
                 error_D_fake.backward(retain_graph = True)
                 
                 # sum gradients from computation both on real and fake examples
-                error_D = error_D_real + error_D_fake
+                error_D = (error_D_real + error_D_fake) / 2
                 
                 # update step
                 self.optimiser_D.step()
@@ -381,6 +381,60 @@ class AdversarialTraining:
         del output_G, target, seq_length_output, seq_length_loss
         torch.cuda.empty_cache()
         return loss
+    
+    def generate_summaries(self, input_val, input_val_lengths, target_val, target_val_lengths):
+        """
+        :param input_val:
+            type:
+            description:
+        :param input_val_lengths:
+            type:
+            description:
+        :param target_val:
+            type:
+            description:
+        :param target_val_lengths:
+            type:
+            description:
+                
+        :return sumaries:
+            type:
+            description:
+        """
+        self.generator.model.eval()
+        
+        (input_val, input_val_lengths,
+        target_val, target_val_lengths) = self._generate_batches(padded_input = input_val,
+                                                                      input_lengths = input_val_lengths,
+                                                                      padded_target = target_val,
+                                                                      target_lengths = target_val_lengths)
+        OUTPUT = []
+        for input, target, seq_length_input, seq_length_target in zip(input_val,
+                                                                      target_val,
+                                                                      input_val_lengths,
+                                                                      target_val_lengths
+                                                                      ):
+            ## FORWARD PASS
+            # Prepare RNN-edible input - i.e. pack padded sequence
+            # trim input, target
+            input = torch.from_numpy(
+                input[:seq_length_input.max()]
+                ).long()
+            target = torch.from_numpy(
+                target[:seq_length_target.max()]
+                ).long().to(self.device)
+                        
+            output = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
+                                          target = target, teacher_forcing_ratio = 0,
+                                          adversarial = False, noise_std = 0)
+            del input, target
+            torch.cuda.empty_cache()
+            
+            OUTPUT.append(
+                output.argmax(dim = 2).cpu().numpy()
+                )
+        
+        return np.array(OUTPUT)
     
     def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths):
         """
