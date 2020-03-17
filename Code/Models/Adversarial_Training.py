@@ -277,6 +277,7 @@ class AdversarialTraining:
                     self.generator.model.eval()
                     self.discriminator.model.eval()
                     val_batch = 0
+                    val_loss = 0
                     self.rouge1, self.rouge2, self.rougeL = 0, 0, 0
                     outputs_true = 0
                     for input, target, seq_length_input, seq_length_target in zip(input_val,
@@ -299,6 +300,8 @@ class AdversarialTraining:
                         output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                         target = target, teacher_forcing_ratio = 0,
                                                         adversarial = True, noise_std = self.grid['noise_std'])
+                        val_loss += self.validation_loss_eval(output_G, target, seq_length_target)
+                        
                         hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
                         hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
                         references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
@@ -324,11 +327,12 @@ class AdversarialTraining:
                         outputs_true += sum(output_labels == fake_labels_flatten.cpu().numpy())
                     
                     acc = 100 * float(outputs_true) / (2*self.n_batches_val*self.grid['batch_size'])
+                    val_loss /= val_batch
                     
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
                     print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
-                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Discriminator accuracy = {acc:.2f} %.')
+                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Cross-Entropy = {val_loss:.3f} |Discriminator accuracy = {acc:.2f} %.')
                     self.generator.model.train()
                     self.discriminator.model.train()
             
@@ -339,7 +343,32 @@ class AdversarialTraining:
         return self.rouge.get_scores(hyp, ref)
       except:
         return "drop"
-                
+    
+    def validation_loss_eval(self, output_G, target, seq_length_target):
+        """
+        Function handling the course of computing Cross-Entropy loss.
+        """            
+        # Pack output and target padded sequence
+        ## Determine a length of output sequence based on the first occurrence of <eos>
+        seq_length_output = (output_G.argmax(2) == self.grid['text_dictionary'].word2index['eos']).int().argmax(0).cpu().numpy()
+        seq_length_output += 1
+                            
+        # determine seq_length for computation of loss function based on max(seq_lenth_target, seq_length_output)
+        seq_length_loss = np.array(
+            (seq_length_output, seq_length_target)
+            ).max(0)
+        
+        output = nn.utils.rnn.pack_padded_sequence(output_G,
+                                                   lengths = seq_length_loss,
+                                                   batch_first = False,
+                                                   enforce_sorted = False).to(self.device)
+        
+        target_padded = nn.utils.rnn.pack_padded_sequence(target,
+                                                   lengths = seq_length_loss,
+                                                   batch_first = False,
+                                                   enforce_sorted = False).to(self.device)
+    
+        return self.loss_function_G(output[0], target_padded[0])
     
     def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths):
         """
