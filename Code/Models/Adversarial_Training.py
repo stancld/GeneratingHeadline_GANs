@@ -83,7 +83,8 @@ class AdversarialTraining:
         
         self.device = kwargs['device']
         self.loss_function_D = nn.BCEWithLogitsLoss().to(self.device)
-        self.loss_function_G = nn.CrossEntropyLoss().to(self.device)
+        #self.loss_function_G = nn.CrossEntropyLoss().to(self.device)
+        self.loss_function_G = nn.NLLLoss().to(self.device)
         self.optimiser_D_ = optimiser_D
         self.optimiser_G_ = optimiser_G
         
