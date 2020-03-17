@@ -358,18 +358,18 @@ class AdversarialTraining:
             (seq_length_output, seq_length_target)
             ).max(0)
         
-        output = nn.utils.rnn.pack_padded_sequence(output_G,
+        output_G = nn.utils.rnn.pack_padded_sequence(output_G,
                                                    lengths = seq_length_loss,
                                                    batch_first = False,
                                                    enforce_sorted = False).to(self.device)
         
-        target_padded = nn.utils.rnn.pack_padded_sequence(target,
+        target = nn.utils.rnn.pack_padded_sequence(target,
                                                    lengths = seq_length_loss,
                                                    batch_first = False,
                                                    enforce_sorted = False).to(self.device)
     
-        loss = self.loss_function_G(output[0], target_padded[0])
-        del output, target_padded
+        loss = self.loss_function_G(output_G[0], target[0])
+        del output_G, target
         torch.cuda.empty_cache()
         return loss
     
