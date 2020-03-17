@@ -386,10 +386,11 @@ class _Seq2Seq(nn.Module):
         
         # introduce noise if adversarial = True
         if adversarial == True:
-            hidden = hidden_.clone() + torch.from_numpy(
-                np.random.normal(0, noise_std, size = hidden_.shape)
-                ).to(self.device).float()
-            hidden = hidden.float()
+            if np.random.random() > .5: 
+                hidden = hidden_.clone() + torch.from_numpy(
+                    np.random.normal(0, noise_std, size = hidden_.shape)
+                    ).to(self.device).float()
+                hidden = hidden.float()
         else:
             hidden = hidden_
         
