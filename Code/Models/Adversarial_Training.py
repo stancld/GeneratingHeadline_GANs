@@ -308,6 +308,7 @@ class AdversarialTraining:
                         hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
                         hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
                         references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
+                        torch.cuda.empty_cache() # get out of target from GPU
                         ROUGE = [self.rouge_get_scores(hyp, ref) for hyp, ref in zip(hypotheses, references)]
                         self.rouge1 += ( (np.array([x[0]['rouge-1']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge1) / val_batch )
                         self.rouge2 += ( (np.array([x[0]['rouge-2']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge2) / val_batch )
@@ -328,6 +329,8 @@ class AdversarialTraining:
                             [1 if x>=0 else 0 for x in outpud_D_G]
                             )
                         outputs_true += sum(output_labels == fake_labels_flatten.cpu().numpy())
+                        # cleaning
+                        del output_D, output_D_G
                         torch.cuda.empty_cache()
                         
                     acc = 100 * float(outputs_true) / (2*self.n_batches_val*self.grid['batch_size'])
@@ -373,6 +376,7 @@ class AdversarialTraining:
                                                    enforce_sorted = False).to(self.device)
     
         loss = self.loss_function_G(output_G[0], target[0])
+        # cleaning
         del output_G, target, seq_length_output, seq_length_loss
         torch.cuda.empty_cache()
         return loss
