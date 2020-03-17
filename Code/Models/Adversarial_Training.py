@@ -368,7 +368,10 @@ class AdversarialTraining:
                                                    batch_first = False,
                                                    enforce_sorted = False).to(self.device)
     
-        return self.loss_function_G(output[0], target_padded[0])
+        loss = self.loss_function_G(output[0], target_padded[0])
+        del output, target_padded
+        torch.cuda.empty_cache()
+        return loss
     
     def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths):
         """
