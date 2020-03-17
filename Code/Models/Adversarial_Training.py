@@ -265,7 +265,7 @@ class AdversarialTraining:
                     
                     # Compute loss
                     error_G_2 = self.loss_function_G(output_G[0], target_padded[0])
-                    error_G_1 = self.loss_function_D(output_D_G, real_labels_flatten)
+                    error_G_1 = 1 - self.loss_function_D(output_D_G, real_labels_flatten)
                     error_G = error_G_1 * error_G_2
                     # Calculate gradient
                     error_G.backward(retain_graph = True)
