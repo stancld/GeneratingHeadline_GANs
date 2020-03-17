@@ -385,12 +385,11 @@ class _Seq2Seq(nn.Module):
         encoder_outputs, hidden_ = self.encoder(seq2seq_input, input_lengths)
         
         # introduce noise if adversarial = True
-        if adversarial == True:
-            if np.random.random() > .5: 
-                hidden = hidden_.clone() + torch.from_numpy(
-                    np.random.normal(0, noise_std, size = hidden_.shape)
-                    ).to(self.device).float()
-                hidden = hidden.float()
+        if (adversarial == True) & (np.random.random() > .5):
+            hidden = hidden_.clone() + torch.from_numpy(
+                np.random.normal(0, noise_std, size = hidden_.shape)
+                ).to(self.device).float()
+            hidden = hidden.float()
         else:
             hidden = hidden_
         
