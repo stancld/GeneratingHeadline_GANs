@@ -85,8 +85,13 @@ class AdversarialTraining:
         self.device = kwargs['device']
         self.loss_function_D = nn.BCEWithLogitsLoss().to(self.device)
         self.loss_function_G = nn.CrossEntropyLoss().to(self.device)
-        self.optimiser_D_ = optimiser_D
-        self.optimiser_G_ = optimiser_G
+        # Initialize optimiser + set lr_scheduler for generator
+        self.optimiser_D = optimiser_D(self.discriminator.model.parameters(), lr= self.grid['learning_rate_D'],
+                                                weight_decay = self.grid['l2_reg'])
+        self.optimiser_G = optimiser_G(self.generator.model.parameters(), lr= self.grid['learning_rate_G'],
+                                                weight_decay = 0.0)
+        lr_lambda = lambda x: 0.98
+        self.lr_scheduler = optim.lr_scheduler.MultiplcativeLR(self.optimiser_G, lr_lambda = lr_lambda)
         
         self.pad_idx = self.grid['headline_dictionary'].word2index['<pad>']
         self.eos_idx = self.grid['headline_dictionary'].word2index['eos']
@@ -160,24 +165,19 @@ class AdversarialTraining:
             self.discriminator.model.train()
             epoch_Loss_D = 0
             epoch_Loss_G = 0
-            batch = 0
+            batch, batch_D= 0, 0            
             
             # shuffle the data
             reshuffle = np.random.shuffle(input_arr)
             input_train, input_train_lengths = input_train[reshuffle].squeeze(0), input_train_lengths[reshuffle].squeeze(0)
             target_train, target_train_lengths = target_train[reshuffle].squeeze(0), target_train_lengths[reshuffle].squeeze(0)
             
-            # Initialize optimise
-            self.optimiser_D = self.optimiser_D_(self.discriminator.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_D'],
-                                                 weight_decay = self.grid['l2_reg'])
-            self.optimiser_G = self.optimiser_G_(self.generator.model.parameters(), lr= (0.98**epoch) * self.grid['learning_rate_G'],
-                                                 weight_decay = 0.0)
-            
             for input, target, seq_length_input, seq_length_target in zip(input_train,
                                                                           target_train,
                                                                           input_train_lengths,
                                                                           target_train_lengths,
                                                                           ):
+                # counter
                 batch += 1
                 # Paragraphs
                 input = torch.from_numpy(
@@ -196,36 +196,38 @@ class AdversarialTraining:
                 real_labels = torch.ones(self.grid['batch_size']).to(self.device)
                 fake_labels = torch.zeros(self.grid['batch_size']).to(self.device)
                 
-                
-                ## Compute log(D(x)) using batch of real examples
-                self.optimiser_D.zero_grad()
-                # dicriminator output
-                output_D, real_labels_flatten = self.discriminator.forward(target.permute(1,0), real_labels) #discriminator needs transpose input
-                # calculate loss function on the batch of real examples
-                error_D_real = self.loss_function_D(output_D, real_labels_flatten)
-                # Calculate gradient
-                error_D_real.backward(retain_graph = True)
-                
-                ## Compute log(1 - D(G(z)))
-                # Generate summaries
-                output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
-                                                target = target, teacher_forcing_ratio = 1,
-                                                adversarial = True, noise_std = self.grid['noise_std'])
-                # discriminator output D(G(z))
-                output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), fake_labels) #discriminator needs transpose input
-                # calculate loss function on the batch of fake examples
-                error_D_fake = self.loss_function_D(output_D_G, fake_labels_flatten)
-                # calculate gradient
-                error_D_fake.backward(retain_graph = True)
-                
-                # sum gradients from computation both on real and fake examples
-                error_D = (error_D_real + error_D_fake) / 2
-                
-                # update step
-                self.optimiser_D.step()
-                
-                # cleaning and saving
-                epoch_Loss_D += ( (error_D - epoch_Loss_D) / batch )
+                if np.random.random() > 0.5:
+                    # counter
+                    batch_D += 1
+                    ## Compute log(D(x)) using batch of real examples
+                    self.optimiser_D.zero_grad()
+                    # dicriminator output
+                    output_D, real_labels_flatten = self.discriminator.forward(target.permute(1,0), real_labels) #discriminator needs transpose input
+                    # calculate loss function on the batch of real examples
+                    error_D_real = self.loss_function_D(output_D, real_labels_flatten)
+                    # Calculate gradient
+                    error_D_real.backward(retain_graph = True)
+                    
+                    ## Compute log(1 - D(G(z)))
+                    # Generate summaries
+                    output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
+                                                    target = target, teacher_forcing_ratio = 1,
+                                                    adversarial = True, noise_std = self.grid['noise_std'])
+                    # discriminator output D(G(z))
+                    output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), fake_labels) #discriminator needs transpose input
+                    # calculate loss function on the batch of fake examples
+                    error_D_fake = self.loss_function_D(output_D_G, fake_labels_flatten)
+                    # calculate gradient
+                    error_D_fake.backward(retain_graph = True)
+                    
+                    # sum gradients from computation both on real and fake examples
+                    error_D = (error_D_real + error_D_fake) / 2
+                    
+                    # update step
+                    self.optimiser_D.step()
+                    
+                    # cleaning and saving
+                    epoch_Loss_D += ( (error_D - epoch_Loss_D) / batch_D )
                 
                 #####
                 # (2) Update Generator: we maximize log(D(G(z)))
@@ -336,17 +338,17 @@ class AdversarialTraining:
                         
                     acc = 100 * float(outputs_true) / (2*self.n_batches_val*self.grid['batch_size'])
                     val_loss /= val_batch
-                    
+                
+                    # decrease learning rate for generator
+                    if batch % 200 == 0:
+                        lr_scheduler.step()
+
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
                     print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
                     print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Cross-Entropy = {val_loss:.3f} | Discriminator accuracy = {acc:.2f} %.')
                     self.generator.model.train()
                     self.discriminator.model.train()
-                if batch == 20:
-                    self.H = hypotheses
-                if batch % 200 == 0:
-                    return self.H, hypotheses, references
             
     def rouge_get_scores(self, hyp, ref):
       """
