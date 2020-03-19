@@ -276,7 +276,7 @@ class AdversarialTraining:
                     # cleaning
                     del output_G, target_padded
                     torch.cuda.empty_cache()
-                print(f'BCELoss = {error_G_1:.3f}, Cross-Entropy = {error_G_2:.3f}')
+                print(f'Generator loss: {error_G:.3f}')
                 
                 #### MEASUREMENT ####
                 if batch % 20 == 0:
