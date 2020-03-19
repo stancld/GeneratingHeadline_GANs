@@ -90,8 +90,7 @@ class AdversarialTraining:
                                                 weight_decay = self.grid['l2_reg'])
         self.optimiser_G = optimiser_G(self.generator.model.parameters(), lr= self.grid['learning_rate_G'],
                                                 weight_decay = 0.0)
-        lr_lambda = lambda x: 0.98
-        self.lr_scheduler = optim.lr_scheduler.MultiplicativeLR(self.optimiser_G, lr_lambda = lr_lambda)
+        self.lr_scheduler = optim.lr_scheduler.MultiplicativeLR(self.optimiser_G, lr_lambda = lambda lr: 0.98)
         
         self.pad_idx = self.grid['headline_dictionary'].word2index['<pad>']
         self.eos_idx = self.grid['headline_dictionary'].word2index['eos']
@@ -241,11 +240,11 @@ class AdversarialTraining:
                         output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                         target = target, teacher_forcing_ratio = 1,
                                                         adversarial = True, noise_std = self.grid['noise_std'])
+                    ## For the first term - log(D(G(x)))
                     # FORWARD pass with updated discriminator
                     output_D, real_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), real_labels)
-                    # Compute loss function
-                    # output_G = F.log_softmax(output_G, dim = 2) # not necessary in for cross-entropy loss
-                    
+
+                    ## For the second term - CrossEntropy calculated over the generated sequence measuring the difference between generated and target summary
                     # Pack output and target padded sequence
                     ## Determine a length of output sequence based on the first occurrence of <eos>
                     seq_length_output = (output_G.argmax(2) == self.grid['text_dictionary'].word2index['eos']).int().argmax(0).cpu().numpy()
@@ -343,7 +342,7 @@ class AdversarialTraining:
                 
                     # decrease learning rate for generator
                     if batch % 200 == 0:
-                        lr_scheduler.step()
+                        self.lr_scheduler.step()
 
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
