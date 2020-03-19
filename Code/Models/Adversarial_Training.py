@@ -91,7 +91,7 @@ class AdversarialTraining:
         self.optimiser_G = optimiser_G(self.generator.model.parameters(), lr= self.grid['learning_rate_G'],
                                                 weight_decay = 0.0)
         lr_lambda = lambda x: 0.98
-        self.lr_scheduler = optim.lr_scheduler.MultiplcativeLR(self.optimiser_G, lr_lambda = lr_lambda)
+        self.lr_scheduler = optim.lr_scheduler.MultiplicativeLR(self.optimiser_G, lr_lambda = lr_lambda)
         
         self.pad_idx = self.grid['headline_dictionary'].word2index['<pad>']
         self.eos_idx = self.grid['headline_dictionary'].word2index['eos']
