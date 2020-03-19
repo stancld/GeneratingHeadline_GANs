@@ -343,8 +343,10 @@ class AdversarialTraining:
                     print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Cross-Entropy = {val_loss:.3f} | Discriminator accuracy = {acc:.2f} %.')
                     self.generator.model.train()
                     self.discriminator.model.train()
-                if batch % 200 == 0:
-                    return hypotheses, references
+                elif batch == 1:
+                    self.H = hypotheses
+                elif batch % 200 == 0:
+                    return self.H, hypotheses, references
             
     def rouge_get_scores(self, hyp, ref):
       """
