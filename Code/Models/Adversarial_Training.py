@@ -512,6 +512,11 @@ class AdversarialTraining:
         '''
         return self.embedding_layer(x).float()
     
+    def save(self):
+        """
+        """
+        torch.save(self.generator.model.state_dict(), "../data/Results/{}.pth".format(self.model_name))
+    
     def load(self):
         """
         :param name_path:
