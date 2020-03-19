@@ -226,7 +226,6 @@ class AdversarialTraining:
                 
                 # cleaning and saving
                 epoch_Loss_D += ( (error_D - epoch_Loss_D) / batch )
-                print(f'GAN Loss = {epoch_Loss_D:.3f}')
                 
                 #####
                 # (2) Update Generator: we maximize log(D(G(z)))
@@ -276,7 +275,6 @@ class AdversarialTraining:
                     # cleaning
                     del output_G, target_padded
                     torch.cuda.empty_cache()
-                print(f'Generator loss: {error_G:.3f}')
                 
                 #### MEASUREMENT ####
                 if batch % 20 == 0:
@@ -345,6 +343,7 @@ class AdversarialTraining:
                     print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Cross-Entropy = {val_loss:.3f} | Discriminator accuracy = {acc:.2f} %.')
                     self.generator.model.train()
                     self.discriminator.model.train()
+                    return output_G
             
     def rouge_get_scores(self, hyp, ref):
       """
