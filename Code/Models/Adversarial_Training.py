@@ -196,7 +196,8 @@ class AdversarialTraining:
                 real_labels = torch.ones(self.grid['batch_size']).to(self.device)
                 fake_labels = torch.zeros(self.grid['batch_size']).to(self.device)
                 
-                if np.random.random() > 0.5:
+                optim_D = np.random.random() > 0.5
+                if optim_D:
                     # counter
                     batch_D += 1
                     ## Compute log(D(x)) using batch of real examples
@@ -235,7 +236,7 @@ class AdversarialTraining:
                 #####
                 for _ in range(self.grid['G_multiple']):
                     self.optimiser_G.zero_grad()
-                    if _ != 0:
+                    if (_ != 0) | (optim_D != True):
                         # Generate summaries
                         output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                         target = target, teacher_forcing_ratio = 1,
