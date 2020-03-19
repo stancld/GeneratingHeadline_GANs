@@ -226,7 +226,6 @@ class AdversarialTraining:
                 
                 # cleaning and saving
                 epoch_Loss_D += ( (error_D - epoch_Loss_D) / batch )
-                print(epoch_Loss_D)
                 
                 #####
                 # (2) Update Generator: we maximize log(D(G(z)))
@@ -268,6 +267,7 @@ class AdversarialTraining:
                     error_G_2 = self.loss_function_G(output_G[0], target_padded[0])
                     error_G_1 = self.loss_function_D(output_D_G, real_labels_flatten)
                     error_G = error_G_1 * error_G_2
+                    print(f'BCELoss = {error_G_1:.3f}, Cross-Entropy = {error_G_2:.3f}'
                     # Calculate gradient
                     error_G.backward(retain_graph = True)
                     # Update step
