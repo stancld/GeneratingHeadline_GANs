@@ -226,7 +226,7 @@ class AdversarialTraining:
                 
                 # cleaning and saving
                 epoch_Loss_D += ( (error_D - epoch_Loss_D) / batch )
-                print(f'GAN Loss = {epoch_Loss_D):3.f}')
+                print(f'GAN Loss = {epoch_Loss_D:3.f}')
                 
                 #####
                 # (2) Update Generator: we maximize log(D(G(z)))
