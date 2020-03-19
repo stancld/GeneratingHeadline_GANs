@@ -225,7 +225,8 @@ class AdversarialTraining:
                 self.optimiser_D.step()
                 
                 # cleaning and saving
-                epoch_Loss_D += error_D
+                epoch_Loss_D += ( (error_D - epoch_Loss_D) / batch )
+                print(epoch_Loss_D)
                 
                 #####
                 # (2) Update Generator: we maximize log(D(G(z)))
