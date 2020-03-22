@@ -72,7 +72,8 @@ class AdversarialTraining:
                      'model_name': kwargs['model_name'],
                      'text_dictionary': kwargs['text_dictionary'],
                      'headline_dictionary': kwargs['headline_dictionary'],
-                     'noise_std': kwargs['noise_std']
+                     'noise_std': kwargs['noise_std'],
+                     'optim_d_prob': kwargs['optim_d_prob']
                      }
         
         # Store essential parameters and objects
@@ -195,7 +196,7 @@ class AdversarialTraining:
                 real_labels = torch.ones(self.grid['batch_size']).to(self.device)
                 fake_labels = torch.zeros(self.grid['batch_size']).to(self.device)
                 
-                optim_D = np.random.random() > 0.5
+                optim_D = np.random.random() < self.grid['optim_d_prob']
                 if optim_D:
                     # counter
                     batch_D += 1
@@ -228,6 +229,8 @@ class AdversarialTraining:
                     
                     # cleaning and saving
                     epoch_Loss_D += ( (error_D - epoch_Loss_D) / batch_D )
+                    del output_D_G
+                    torch.cuda.empty_cache()
                 
                 #####
                 # (2) Update Generator: we maximize log(D(G(z)))
@@ -321,6 +324,7 @@ class AdversarialTraining:
                         ## DISCRIMINATOR performance
                         output_D, real_labels_flatten = self.discriminator.forward(target.permute(1,0), real_labels) #discriminator needs transpose input
                         outpud_D = output_D.detach().cpu().numpy()
+                        torch.cuda.empty_cache()
                         output_labels = np.array(
                             [1 if x>=0 else 0 for x in outpud_D]
                             )
@@ -329,6 +333,7 @@ class AdversarialTraining:
                         output_G = F.log_softmax(output_G, dim = 2).argmax(dim = 2).long()
                         output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.permute(1,0), fake_labels) #discriminator needs transpose input
                         outpud_D_G = output_D_G.detach().cpu().numpy()
+                        torch.cuda.empty_cache()
                         output_labels = np.array(
                             [1 if x>=0 else 0 for x in outpud_D_G]
                             )
@@ -347,7 +352,7 @@ class AdversarialTraining:
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
                     print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
-                    print(f'ROUGE-1 = {100*self.rouge1:.2f} | ROUGE-2 = {100*self.rouge2:.2f} | ROUGE-l = {100*self.rougeL:.2f} | Cross-Entropy = {val_loss:.3f} | Discriminator accuracy = {acc:.2f} %.')
+                    print(f'ROUGE-1 = {100*self.rouge1:.3f} | ROUGE-2 = {100*self.rouge2:.3f} | ROUGE-l = {100*self.rougeL:.3f} | Discriminator accuracy = {acc:.2f} %.')
                     self.generator.model.train()
                     self.discriminator.model.train()
             
@@ -528,6 +533,3 @@ class AdversarialTraining:
             self.start_epoch = 0
         except:
             self.start_epoch = 0
-        
-        
-        
