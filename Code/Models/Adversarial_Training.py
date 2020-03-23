@@ -97,6 +97,9 @@ class AdversarialTraining:
         self.eos_idx = self.grid['headline_dictionary'].word2index['eos']
         
         self.rouge = Rouge()
+
+        # required for initialization
+        self.epoch = 0
         
     def training(self,
                  X_train, X_train_lengths, y_train, y_train_lengths,
