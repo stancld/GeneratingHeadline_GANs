@@ -344,9 +344,6 @@ class AdversarialTraining:
                         
                     acc = 100 * float(outputs_true) / (2*self.n_batches_val*self.grid['batch_size'])
                     val_loss /= val_batch
-                
-            # decrease learning rate for a generator after the epoch
-            self.lr_scheduler.step()
 
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
@@ -354,6 +351,9 @@ class AdversarialTraining:
                     print(f'ROUGE-1 = {100*self.rouge1:.3f} | ROUGE-2 = {100*self.rouge2:.3f} | ROUGE-l = {100*self.rougeL:.3f} | Discriminator accuracy = {acc:.2f} %.')
                     self.generator.model.train()
                     self.discriminator.model.train()
+            
+            # decrease learning rate for a generator after the epoch
+            self.lr_scheduler.step()
             
     def rouge_get_scores(self, hyp, ref):
       """
