@@ -532,7 +532,7 @@ class AdversarialTraining:
         torch.save(self.optimiser_D.state_dict(), "../data/Results/opt_d_{}.pth".format(self.grid['model_name']))
 
         # save a piece of information containing a number of epoch done
-        f = open(f'epochs_{self.grid['model_name']}.txt', 'a')
+        f = open(f"epochs_{self.grid['model_name']}.txt", 'a')
         f.write(str(self.epoch+1))
         f.close()
     
@@ -552,6 +552,6 @@ class AdversarialTraining:
             self.optimiser_D.load_state_dict("../data/Results/opt_d_{}.pth".format(self.grid['model_name']))
 
             # load startin epoch
-            self.start_epoch = int(np.loadtxt(f'epochs_{self.grid['model_name']}.txt'))
+            self.start_epoch = int(np.loadtxt(f"epochs_{self.grid['model_name']}.txt"))
         except:
             self.start_epoch = 0
