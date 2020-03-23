@@ -345,9 +345,8 @@ class AdversarialTraining:
                     acc = 100 * float(outputs_true) / (2*self.n_batches_val*self.grid['batch_size'])
                     val_loss /= val_batch
                 
-                    # decrease learning rate for generator
-                    if batch % 200 == 0:
-                        self.lr_scheduler.step()
+            # decrease learning rate for a generator after the epoch
+            self.lr_scheduler.step()
 
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                     print(f'Epoch: {epoch+1:.0f}')
