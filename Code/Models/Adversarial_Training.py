@@ -160,6 +160,8 @@ class AdversarialTraining:
         input_arr = np.arange(input_train.shape[0])
         
         for epoch in range(self.start_epoch, self.grid['max_epochs']):
+            # save epoch used for saving model
+            self.epoch = epoch 
             # run the training
             self.generator.model.train()
             self.discriminator.model.train()
@@ -354,6 +356,7 @@ class AdversarialTraining:
             
             # decrease learning rate for a generator after the epoch
             self.lr_scheduler.step()
+            self.save()
             
     def rouge_get_scores(self, hyp, ref):
       """
@@ -520,7 +523,18 @@ class AdversarialTraining:
     def save(self):
         """
         """
+        # Save generator state and state of its optimizer
         torch.save(self.generator.model.state_dict(), "../data/Results/{}.pth".format(self.grid['model_name']))
+        torch.save(self.optimiser_G.state_dict(), "../data/Results/opt_g_{}.pth".format(self.grid['model_name']))
+
+        # Save discriminator state and state of its optimizer
+        torch.save(self.discriminator.model.state_dict(), "../data/Results/disc_{}.pth".format(self.grid['model_name']))
+        torch.save(self.optimiser_D.state_dict(), "../data/Results/opt_d_{}.pth".format(self.grid['model_name']))
+
+        # save a piece of information containing a number of epoch done
+        f = open(f'epochs_{self.grid['model_name']}.txt', 'a')
+        f.write(str(self.epoch+1))
+        f.close()
     
     def load(self):
         """
@@ -529,7 +543,15 @@ class AdversarialTraining:
             description:
         """
         try:
-            self.start_epoch = 0
-            torch.save(self.generator.model.state_dict(), "../data/Results/{}.pth".format(self.grid['model_name']))
+            # Load generator states and its optimizer
+            self.generator.model.load_state_dict("../data/Results/{}.pth".format(self.grid['model_name']))
+            self.optimiser_G.load_state_dict("../data/Results/opt_g_{}.pth".format(self.grid['model_name']))
+            
+            # Load discriminator states and its optimizer
+            self.discriminator.model.load_state_dict("../data/Results/disc{}.pth".format(self.grid['model_name']))
+            self.optimiser_D.load_state_dict("../data/Results/opt_d_{}.pth".format(self.grid['model_name']))
+
+            # load startin epoch
+            self.start_epoch = int(np.loadtxt(f'epochs_{self.grid['model_name']}.txt'))
         except:
             self.start_epoch = 0
