@@ -521,7 +521,7 @@ class AdversarialTraining:
     def save(self):
         """
         """
-        torch.save(self.generator.model.state_dict(), "../data/Results/{}.pth".format(self.model_name))
+        torch.save(self.generator.model.state_dict(), "../data/Results/{}.pth".format(self.grid['model_name']))
     
     def load(self):
         """
@@ -530,6 +530,6 @@ class AdversarialTraining:
             description:
         """
         try:
-            self.start_epoch = 0
+            torch.save(self.generator.model.state_dict(), "../data/Results/{}.pth".format(self.grid['model_name']))
         except:
-            self.start_epoch = 0
+            pass
