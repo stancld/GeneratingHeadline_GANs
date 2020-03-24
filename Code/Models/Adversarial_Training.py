@@ -90,7 +90,7 @@ class AdversarialTraining:
         self.optimiser_D = optimiser_D(self.discriminator.model.parameters(), lr= self.grid['learning_rate_D'],
                                                 weight_decay = self.grid['l2_reg'])
         self.optimiser_G = optimiser_G(self.generator.model.parameters(), lr= self.grid['learning_rate_G'],
-                                                weight_decay = 0.0)
+                                                weight_decay = 1e-4)
         self.lr_scheduler = optim.lr_scheduler.MultiplicativeLR(self.optimiser_G, lr_lambda = lambda lr: 0.98)
         
         self.pad_idx = self.grid['headline_dictionary'].word2index['<pad>']
@@ -546,16 +546,16 @@ class AdversarialTraining:
             description:
         """
         try:
-            print('Hi')
+            
             # Load generator states and its optimizer
             self.generator.model.load_state_dict("../data/Results/{}.pth".format(self.grid['model_name']))
-           # self.optimiser_G.load_state_dict("../data/Results/opt_g_{}.pth".format(self.grid['model_name']))
+            self.optimiser_G.load_state_dict("../data/Results/opt_g_{}.pth".format(self.grid['model_name']))
             
             # Load discriminator states and its optimizer
-           # self.discriminator.model.load_state_dict("../data/Results/disc{}.pth".format(self.grid['model_name']))
-           # self.optimiser_D.load_state_dict("../data/Results/opt_d_{}.pth".format(self.grid['model_name']))
+            self.discriminator.model.load_state_dict("../data/Results/disc{}.pth".format(self.grid['model_name']))
+            self.optimiser_D.load_state_dict("../data/Results/opt_d_{}.pth".format(self.grid['model_name']))
 
             # load startin epoch
-           # self.start_epoch = int(np.loadtxt(f"epochs_{self.grid['model_name']}.txt"))
+            self.start_epoch = int(np.loadtxt(f"epochs_{self.grid['model_name']}.txt"))
         except:
             self.start_epoch = 0
