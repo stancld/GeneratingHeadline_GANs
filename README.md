@@ -27,8 +27,3 @@ A lot of endeavours have already been devoted to NLP text summarization techniqu
 
 ### Data
 **WikiHow dataset** - https://arxiv.org/pdf/1810.09305.pdf?fbclid=IwAR22xaM5JtRTHq-EMaBqSN30DaxhqF7dllK_8T47mOsnl8IY0ikM0VX3VKQ
-
------
-
-**Overleaf:** https://www.overleaf.com/4491181161rvtjqnzdkhkf
-#GeneratingHeadline_GANs
