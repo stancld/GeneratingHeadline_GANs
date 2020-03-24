@@ -546,6 +546,7 @@ class AdversarialTraining:
             description:
         """
         try:
+            print('Hi')
             # Load generator states and its optimizer
             self.generator.model.load_state_dict("../data/Results/{}.pth".format(self.grid['model_name']))
            # self.optimiser_G.load_state_dict("../data/Results/opt_g_{}.pth".format(self.grid['model_name']))
@@ -556,6 +557,5 @@ class AdversarialTraining:
 
             # load startin epoch
            # self.start_epoch = int(np.loadtxt(f"epochs_{self.grid['model_name']}.txt"))
-           print('Hi')
         except:
             self.start_epoch = 0
