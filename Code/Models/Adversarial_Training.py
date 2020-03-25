@@ -557,5 +557,6 @@ class AdversarialTraining:
 
             # load startin epoch
             self.start_epoch = int(np.loadtxt(f"epochs_{self.grid['model_name']}.txt"))
+            print(self.generator.model)
         except:
             self.start_epoch = 0
