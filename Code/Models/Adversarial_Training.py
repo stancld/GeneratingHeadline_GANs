@@ -557,6 +557,7 @@ class AdversarialTraining:
 
             # load startin epoch
             self.start_epoch = int(np.loadtxt(f"epochs_{self.grid['model_name']}.txt"))
-            print('Model state has been successfullu loaded.')
+            print('Model state has been successfully loaded.')
         except:
             self.start_epoch = 0
+            print('No state has been loaded.')
