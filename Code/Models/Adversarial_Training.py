@@ -552,11 +552,10 @@ class AdversarialTraining:
             self.optimiser_G.load_state_dict("../data/Results/opt_g_{}.pth".format(self.grid['model_name']))
             
             # Load discriminator states and its optimizer
-            self.discriminator.model.load_state_dict("../data/Results/disc{}.pth".format(self.grid['model_name']))
+            self.discriminator.model.load_state_dict("../data/Results/disc_{}.pth".format(self.grid['model_name']))
             self.optimiser_D.load_state_dict("../data/Results/opt_d_{}.pth".format(self.grid['model_name']))
 
             # load startin epoch
             self.start_epoch = int(np.loadtxt(f"epochs_{self.grid['model_name']}.txt"))
-            print(self.generator.model)
         except:
             self.start_epoch = 0
