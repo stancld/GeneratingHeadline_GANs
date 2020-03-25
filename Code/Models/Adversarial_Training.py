@@ -549,7 +549,7 @@ class AdversarialTraining:
             
             # Load generator states and its optimizer
             #self.generator.model.load_state_dict("../data/Results/{}.pth".format(self.grid['model_name']))
-            self.optimiser_G.load_state_dict("../data/Results/opt_g_{}.pth".format(self.grid['model_name']))
+            self.optimiser_G.load_state_dict(torch.load("../data/Results/opt_g_{}.pth".format(self.grid['model_name'])))
             
             # Load discriminator states and its optimizer
             #self.discriminator.model.load_state_dict("../data/Results/disc_{}.pth".format(self.grid['model_name']))
