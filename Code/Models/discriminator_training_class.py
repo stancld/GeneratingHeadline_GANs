@@ -204,7 +204,12 @@ class Discriminator_utility():
 
     def forward(self, X, y):
         """
-        ??????????
+        The function used by the module adversarial training.
+        :param X: Tensor: [batch_size, seq_len];
+        :param y: Tensor: [batch_size];
+
+        :return output: Tensor: [batch_size];
+        :return y: Tensor: [batch_size];
         """
         X, y = X.to(self.device), y.flatten().to(self.device)
         # pass through embedding layer
