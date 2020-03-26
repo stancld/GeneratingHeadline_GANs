@@ -96,7 +96,8 @@ class AdversarialTraining:
                  X_train, X_train_lengths, y_train, y_train_lengths,
                  X_val, X_val_lengths, y_val, y_val_lengths):
         """
-        Functio nrunnig adversarial training for a given number of epochs. Early-stopping rule is not set here.
+        Function running adversarial training for a given number of epochs. Early-stopping rule is not set here.
+        training methodoly is described in the attached paper at the repo.
 
         :param X_train:
             type: Numpy array: [seq_len, n_samples]
@@ -209,7 +210,8 @@ class AdversarialTraining:
                 if optim_D:
                     # counter
                     batch_D += 1
-                    ## Compute log(D(x)) using batch of real examples
+                    
+                    #### Compute log(D(x)) using the batch of real examples ####
                     self.optimiser_D.zero_grad()
                     # dicriminator output
                     output_D, real_labels_flatten = self.discriminator.forward(
@@ -226,7 +228,7 @@ class AdversarialTraining:
                     # Calculate gradient
                     error_D_real.backward(retain_graph = True) # we need to retain backprop graph as this fragment is also used the generator's optimizer
                     
-                    ## Compute log(1 - D(G(z)))
+                    #### Compute log(1 - D(G(z))) using the bacth of fake examples ####
                     # Generate summaries
                     output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
                                                     target = target, teacher_forcing_ratio = 1,
