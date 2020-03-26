@@ -26,24 +26,19 @@ class _Encoder(nn.Module):
     def __init__(self, emb_dim, enc_hid_dim, dec_hid_dim, rnn_num_layers,
                  dropout, embeddings, device):
         """
-        :param emb_dim:
-            type:
-            description:
-        :param enc_hid_dim:
-            type:
-            description:
-        :param dec_hid_dim:
-            type:
-            description:
-        :param dropout:
-            type:
-            description:
-        :param embeddings:
-            type:
-            description
-        :param device:
-            type:
-            description:
+        Args:
+            emb_dim -> int
+
+            enc_hid_dim -> int
+
+            dec_hid_dim -> int
+
+            dropout -> float
+
+            embeddings -> Tensor
+
+            device -> str
+
         """
         super().__init__()
         self.rnn = nn.GRU(input_size=emb_dim,
@@ -59,10 +54,12 @@ class _Encoder(nn.Module):
         """
         Args:
             enc_input -> Tensor: [enc_input_len, batch size]
+
             input_lengths +++++++
 
         Returns:
             outputs -> Tensor: [enc_seq_len, batch size, enc hid dim * 2]
+
             hidden -> Tensor: [batch size, dec hid dim]
         """
 
@@ -122,23 +119,19 @@ class _Attention(nn.Module):
 
     def forward(self, hidden, encoder_outputs, mask):
         """
+        Args:
 
-        :param encoder_outputs:
-            type:
-            description:
-        :param mask:
-            type:
-            description:
+            hidhen -> Tensor: [batch size, dec hid dim]
 
-        :return softmax(attention):
-            type:
-            description:
+            encoder_outputs -> Tensor: [enc_seq_len, batch size, enc hid dim * 2]
+
+            mask -> 
+
+        Returns:
+
+            softmax(attention) -> Tensor: [batch size, enc_seq_len] 
         """
 
-        # hidden = [batch size, dec hid dim]
-        # encoder_outputs = [enc_seq_len, batch size, enc hid dim * 2]
-
-        batch_size = encoder_outputs.shape[1]
         enc_seq_len = encoder_outputs.shape[0]
 
         # repeat decoder hidden state enc_seq_len times
@@ -150,17 +143,19 @@ class _Attention(nn.Module):
         # encoder_outputs = [batch size, enc_seq_len, enc hid dim * 2]
 
         energy = torch.tanh(
-            self.attn(torch.cat((hidden, encoder_outputs), dim=2)))  # energy = [batch size, enc_seq_len, dec hid dim]
+            self.attn(torch.cat((hidden, encoder_outputs), dim=2)))
 
-        # attention= [batch size, enc_seq_len]
+        # energy = [batch size, enc_seq_len, dec hid dim]
+
         attention = self.v(energy).squeeze(2)
+
         # ignoring
         attention = attention.masked_fill(mask == 0, -1e12)
+
         # cleaning
         del energy, encoder_outputs, hidden
         torch.cuda.empty_cache()
 
-        # return
         return F.softmax(attention, dim=1)
 
 
