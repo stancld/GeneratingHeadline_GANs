@@ -151,12 +151,12 @@ class Discriminator_utility():
     def evaluation(self, X_test, y_test):
         '''
         Args:
-            X_test -> [N_samples,seq_len]; word index array
-            y_test -> [N_samples,]; boolean, long type, 1d tensor
+            X_test -> Tensor: [N_samples,seq_len]; 
+            y_test -> Tensor: [N_samples,]; 
 
-            output batches:
-                local_batch  -> [batch_size, seq_len]
-                local_labels -> [batch_size,] boolean
+        Returns:
+            local_batch  -> Tensor: [batch_size, seq_len]
+            local_labels -> Tensor: [batch_size,] 
         '''
         self.model.eval()
         epoch_loss = 0
@@ -177,12 +177,12 @@ class Discriminator_utility():
     def predict(self, X_test, y_test):
         '''
         Args:
-            X_test -> [N_samples,seq_len]; word index array
-            y_test -> [N_samples,]; boolean, long type, 1d tensor
+            X_test -> Tensor: [N_samples,seq_len]; 
+            y_test -> Tensor: [N_samples,]; 
 
             output batches:
-                local_batch  -> [batch_size, seq_len]
-                local_labels -> [batch_size,] boolean
+                local_batch  -> Tensor: [batch_size, seq_len]
+                local_labels -> Tensor: [batch_size,] 
         '''
         self.m.eval()
         outputs_true = 0
