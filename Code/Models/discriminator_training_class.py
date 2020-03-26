@@ -64,11 +64,11 @@ class Discriminator_utility():
         '''
         Args:
             input:
-                X_train -> Tensor, [N_samples,seq_len]; word indices type long()
-                y_train -> Tensor, [N_samples,]; boolean tensor 
+                X_train -> Tensor.long(), [N_samples,seq_len]; word indices 
+                y_train -> Tensor, [N_samples,]; boolean 
 
-                X_test -> Tensor, [N_samples,seq_len]; word indices type long()
-                y_test -> Tensor, [N_samples,]; boolean tensor 
+                X_test -> Tensor.long(), [N_samples,seq_len]; word indices 
+                y_test -> Tensor, [N_samples,]; boolean 
         '''
         best_valid_loss = float('inf')
         self.n_batches = np.ceil(X_train.shape[0] / self.grid['batch_size'])
