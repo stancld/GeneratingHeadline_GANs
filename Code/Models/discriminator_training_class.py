@@ -64,22 +64,23 @@ class Discriminator_utility():
         '''
         Args:
             input:
-                X_train [N_samples,seq_len] word indices type long()
-                y_train [N_samples,] -> boolean tensor 
+                X_train -> Tensor, [N_samples,seq_len]; word indices type long()
+                y_train -> Tensor, [N_samples,]; boolean tensor 
 
-                X_test [N_samples,seq_len] word indices type long()
-                y_test [N_samples,] -> boolean tensor 
+                X_test -> Tensor, [N_samples,seq_len]; word indices type long()
+                y_test -> Tensor, [N_samples,]; boolean tensor 
         '''
         best_valid_loss = float('inf')
         self.n_batches = np.ceil(X_train.shape[0] / self.grid['batch_size'])
-        self.n_batches_test = np.ceil(X_test.shape[0] / self.grid['batch_size'])
+        self.n_batches_test = np.ceil(
+            X_test.shape[0] / self.grid['batch_size'])
         self.train_losses, self.val_losses = [], []
-        
+
         self.epoch = 0
-        
+
         for epoch in range(self.grid['max_epochs']):
             self.epoch += 1
-            
+
             train_loss = self.training(X_train, y_train)
             valid_loss = self.evaluation(X_test, y_test)
 
@@ -95,14 +96,19 @@ class Discriminator_utility():
             self.val_losses.append(valid_loss)
             if epoch >= 2:
                 if self.train_losses[epoch-2] - self.train_losses[epoch] < 0.002:
-                    np.savetxt('Results/discriminator_{}__train_loss.txt'.format(self.grid['model_name']), X = self.train_losses)
-                    np.savetxt('Results/discriminator_{}__validation_loss.txt'.format(self.grid['model_name']), X = self.val_losses)
+                    np.savetxt('Results/discriminator_{}__train_loss.txt'.format(
+                        self.grid['model_name']), X=self.train_losses)
+                    np.savetxt('Results/discriminator_{}__validation_loss.txt'.format(
+                        self.grid['model_name']), X=self.val_losses)
 
-                    statement = "The model has converged after {:.0f} epochs.".format(epoch+1)
+                    statement = "The model has converged after {:.0f} epochs.".format(
+                        epoch+1)
                     return statement
-        
-        np.savetxt('Results/discriminator_{}__train_loss.txt'.format(self.model_name), X = self.train_losses)
-        np.savetxt('Results/discriminator_{}__validation_loss.txt'.format(self.model_name), X = self.val_losses)
+
+        np.savetxt(
+            'Results/discriminator_{}__train_loss.txt'.format(self.model_name), X=self.train_losses)
+        np.savetxt(
+            'Results/discriminator_{}__validation_loss.txt'.format(self.model_name), X=self.val_losses)
 
     def training(self, X_train, y_train):
         '''
@@ -119,8 +125,9 @@ class Discriminator_utility():
         batch = 0
         for local_batch, local_labels in self._generate_batches(X_train, y_train):
             batch += 1
-            
-            local_batch, local_labels = local_batch.to(self.device), local_labels.flatten().to(self.device)
+
+            local_batch, local_labels = local_batch.to(
+                self.device), local_labels.flatten().to(self.device)
             # pass through embedding layer
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
@@ -155,17 +162,18 @@ class Discriminator_utility():
         epoch_loss = 0
         for local_batch, local_labels in self._generate_batches(X_test, y_test):
             #
-            local_batch, local_labels = local_batch.to(self.device), local_labels.flatten().to(self.device)
+            local_batch, local_labels = local_batch.to(
+                self.device), local_labels.flatten().to(self.device)
             # pass through embedding layer
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
 
             local_output = self.model(local_batch_embedded)
-            
+
             loss = self.lossfunction(local_output, local_labels.float())
             epoch_loss += loss.item()
         return epoch_loss / self.n_batches_test
-    
+
     def predict(self, X_test, y_test):
         '''
         Args:
@@ -180,7 +188,8 @@ class Discriminator_utility():
         outputs_true = 0
         for local_batch, local_labels in self._generate_batches(X_test, y_test):
             #
-            local_batch, local_labels = local_batch.to(self.device), local_labels.flatten().numpy()
+            local_batch, local_labels = local_batch.to(
+                self.device), local_labels.flatten().numpy()
             # pass through embedding layer
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
@@ -188,11 +197,11 @@ class Discriminator_utility():
             local_output = self.m(local_batch_embedded)
             local_output = local_output.detach().cpu().numpy()
             local_output = np.array(
-                [1 if x>=0 else 0 for x in local_output]
-                )
+                [1 if x >= 0 else 0 for x in local_output]
+            )
             outputs_true += sum(local_output == local_labels)
         return float(outputs_true) / y_test.shape[0]
-    
+
     def forward(self, X, y):
         """
         """
@@ -201,7 +210,7 @@ class Discriminator_utility():
         X_embedded = self._embedding_layer(X)
         # pass through the model
         output = self.model(X_embedded)
-        
+
         return output, y
 
     def _embedding_layer(self, x):
@@ -248,8 +257,10 @@ class Discriminator_utility():
         Args:
 
         """
-        torch.save(self.m.state_dict(), "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
-        torch.save(self.model.state_dict(), "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
+        torch.save(self.m.state_dict(
+        ), "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
+        torch.save(self.model.state_dict(
+        ), "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
 
     def load(self):
         """
@@ -257,7 +268,8 @@ class Discriminator_utility():
 
         """
         try:
-            self.model.load_state_dict(torch.load("../data/Results/discriminator_{}.pth".format(self.grid['model_name'])))
+            self.model.load_state_dict(torch.load(
+                "../data/Results/discriminator_{}.pth".format(self.grid['model_name'])))
             self.model.eval()
             self.m = copy.deepcopy(self.model)
         except:
@@ -341,7 +353,3 @@ class Discriminator_utility():
             embedded dim -> [batch_size,seq_len,embed_dim] 
           '''
         )
-
-                     
-                     
-                     
