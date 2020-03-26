@@ -52,27 +52,26 @@ class AdversarialTraining:
             description: Optimizer class used for a training of the generator
         """
         # Grid
-        self.grid = {'max_epochs': kwargs['max_epochs'],
-                     'batch_size': kwargs['batch_size'],
-                     'learning_rate_D': kwargs['learning_rate_D'],
-                     'learning_rate_G': kwargs['learning_rate_G'],
-                     'G_multiple': kwargs['G_multiple'],
-                     'l2_reg': kwargs['l2_reg'],
-                     'clip': kwargs['clip'],    
-                     'model_name': kwargs['model_name'],
-                     'text_dictionary': kwargs['text_dictionary'],
-                     'headline_dictionary': kwargs['headline_dictionary'],
-                     'noise_std': kwargs['noise_std'],
-                     'optim_d_prob': kwargs['optim_d_prob']
+        self.grid = {'max_epochs': kwargs['max_epochs'], # maximum number of epochs used for adversarial training
+                     'batch_size': kwargs['batch_size'], # batch size used for adversarial training. This must comply with the batch size used for the generator pretraining
+                     'learning_rate_D': kwargs['learning_rate_D'], # learning rate for the discriminator's optimizer
+                     'learning_rate_G': kwargs['learning_rate_G'], # learning rate for the generator's optimizer
+                     'G_multiple': kwargs['G_multiple'], # number of update steps done for the generator for each batch
+                     'l2_reg': kwargs['l2_reg'], # L2 penalty parameter used for regularization of the discriminator
+                     'clip': kwargs['clip'], # parameter for the maximum absolute value of gradient of the generator
+                     'model_name': kwargs['model_name'], # model name; string
+                     'text_dictionary': kwargs['text_dictionary'], # dictionary for the paragraohs/articles
+                     'headline_dictionary': kwargs['headline_dictionary'], # dictionary for the headliens/summaries
+                     'noise_std': kwargs['noise_std'], # noise introduced to the hidden state of encoder-decoder during adversarial training to mimic an idea of the GAN from CV
+                     'optim_d_prob': kwargs['optim_d_prob'] # the probability an update step for the discriminator is taken with
                      }
-        
         # Store essential parameters and objects
-        #self.embeddings = nn.Embedding.from_pretrained(
-        #    torch.from_numpy(embeddings), freeze=True)
-        
         self.generator = generator_class
         self.discriminator = discriminator_class
-        
+        # do some checks
+        assert self.grid['batch_size'] == self.generator.batch_size, "Batch_size used of adversarial training must be comply with the one used for the generator pretraining!"
+
+        # Store other essential parameters and objects
         self.device = kwargs['device']
         self.loss_function_D = nn.BCEWithLogitsLoss().to(self.device)
         self.loss_function_G = nn.CrossEntropyLoss().to(self.device)
@@ -83,9 +82,11 @@ class AdversarialTraining:
                                                 weight_decay = 1e-4)
         self.lr_scheduler = optim.lr_scheduler.MultiplicativeLR(self.optimiser_G, lr_lambda = lambda lr: 0.98)
         
+        # Store indices of <pad> and <eos>
         self.pad_idx = self.grid['headline_dictionary'].word2index['<pad>']
         self.eos_idx = self.grid['headline_dictionary'].word2index['eos']
         
+        # Initialize module for the ROUGE metrics
         self.rouge = Rouge()
 
         # required for initialization
@@ -95,36 +96,36 @@ class AdversarialTraining:
                  X_train, X_train_lengths, y_train, y_train_lengths,
                  X_val, X_val_lengths, y_val, y_val_lengths):
         """
+        Functio nrunnig adversarial training for a given number of epochs. Early-stopping rule is not set here.
+
         :param X_train:
-            type:
-            description:
+            type: Numpy array: [seq_len, n_samples]
+            description: Input articles in the form of padded sequences of indexed words.
         :param X_train_lengths:
-            type:
-            description:
-        :param y_train:
-            type:
-            description:
-        :param y_train_lengths:
-            type:
-            description:
+            type: Numpy array: [n_samples,]
+            description: Length of paragraphs used for padding sequences to have the same length.
+        :param y_train: 
+            type: Numpy array: [seq_len, n_samples]
+            description: Taget summaries in the form of padded sequences of indexed words.
+        :param y_train_lengths: 
+            type: Numpy array: [n_samples,]
+            description: Length of summaries used for masking during the computation of loss function.
         :param X_val:
-            type:
-            description:
+            type: [seq_len, n_samples]
+            description: Input articles in the form of padded sequences of indexed words.
         :param X_val_lengths:
-            type:
-            description:
+            type: Numpy array: [n_samples,]
+            description: Length of paragraphs used for padding sequences to have the same length.
         :param y_val:
-            type:
-            description:
+            type: Numpy array: [seq_len, n_samples]
+            description: Taget summaries in the form of padded sequences of indexed words.
         :param y_val_lengths:
-            type:
-            description:
-        :param labels_train:
-            type:
-            description:
-        :param labels_val:
-            type:
-            description:
+            type: Numpy array: [n_samples,]
+            description: Length of summaries used for masking during the computation of loss function.
+
+        :return:
+            There is no object returned by this function. Ultimately, adversarial training class
+            contains trained generator, discriminator and also contains the state of their optimizers.
         """
         # measure the time of training
         start_time = time.time()        
@@ -149,24 +150,35 @@ class AdversarialTraining:
         # Save number of batches of training and validation sets for a proper computation of losses
         self.n_batches = input_train.shape[0]
         self.n_batches_val = input_val.shape[0]
+        
         # indices for reshuffling data before running each epoch
         input_arr = np.arange(input_train.shape[0])
         
+        ##### RUN TRAINING #####
         for epoch in range(self.start_epoch, self.grid['max_epochs']):
             # save epoch used for saving model
             self.epoch = epoch 
-            # run the training
+            # set generator.model and discriminator.model to training state
             self.generator.model.train()
             self.discriminator.model.train()
+            
+            # Zero losses for a given epoch
             epoch_Loss_D = 0
             epoch_Loss_G = 0
             batch, batch_D= 0, 0            
             
-            # shuffle the data
+            # shuffle the data (this is done so that our models will not overfit for a given order of examples)
             reshuffle = np.random.shuffle(input_arr)
-            input_train, input_train_lengths = input_train[reshuffle].squeeze(0), input_train_lengths[reshuffle].squeeze(0)
-            target_train, target_train_lengths = target_train[reshuffle].squeeze(0), target_train_lengths[reshuffle].squeeze(0)
+            input_train, input_train_lengths = (
+                input_train[reshuffle].squeeze(0),
+                input_train_lengths[reshuffle].squeeze(0)
+            )
+            target_train, target_train_lengths = (
+                target_train[reshuffle].squeeze(0),
+                target_train_lengths[reshuffle].squeeze(0)
+            )
             
+            ##### RUN BATCHES #####
             for input, target, seq_length_input, seq_length_target in zip(input_train,
                                                                           target_train,
                                                                           input_train_lengths,
@@ -174,11 +186,12 @@ class AdversarialTraining:
                                                                           ):
                 # counter
                 batch += 1
-                # Paragraphs
+                
+                # Put paragraphs to Torch.Tensor
                 input = torch.from_numpy(
                     input[:seq_length_input.max()]
                 ).long()
-                # Summaries
+                # Put summaries to Torch.Tensor and move to GPU 
                 target = torch.from_numpy(
                 target[:seq_length_target.max()]
                 ).long().to(self.device)           
@@ -191,6 +204,7 @@ class AdversarialTraining:
                 real_labels = torch.ones(self.grid['batch_size']).to(self.device)
                 fake_labels = torch.zeros(self.grid['batch_size']).to(self.device)
                 
+                # Run the update step for the discriminator (this is conditioned by probability specified in paraeters)
                 optim_D = np.random.random() < self.grid['optim_d_prob']
                 if optim_D:
                     # counter
@@ -198,11 +212,19 @@ class AdversarialTraining:
                     ## Compute log(D(x)) using batch of real examples
                     self.optimiser_D.zero_grad()
                     # dicriminator output
-                    output_D, real_labels_flatten = self.discriminator.forward(target.permute(1,0), real_labels) #discriminator needs transpose input
+                    output_D, real_labels_flatten = self.discriminator.forward(
+                        target.permute(1,0),
+                        real_labels
+                    )  #discriminator needs transpose input
+                    
                     # calculate loss function on the batch of real examples
-                    error_D_real = self.loss_function_D(output_D, real_labels_flatten)
+                    error_D_real = self.loss_function_D(
+                        output_D,
+                        real_labels_flatten
+                    )
+                                        
                     # Calculate gradient
-                    error_D_real.backward(retain_graph = True)
+                    error_D_real.backward(retain_graph = True) # we need to retain backprop graph as this fragment is also used the generator's optimizer
                     
                     ## Compute log(1 - D(G(z)))
                     # Generate summaries
