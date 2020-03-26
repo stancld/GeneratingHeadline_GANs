@@ -179,7 +179,7 @@ class AdversarialTraining:
                 target_train_lengths[reshuffle].squeeze(0)
             )
             
-            ##### RUN BATCHES #####
+            ##### RUN through BATCHES #####
             for input, target, seq_length_input, seq_length_target in zip(input_train,
                                                                           target_train,
                                                                           input_train_lengths,
@@ -230,15 +230,24 @@ class AdversarialTraining:
                     
                     #### Compute log(1 - D(G(z))) using the bacth of fake examples ####
                     # Generate summaries
-                    output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
-                                                    target = target, teacher_forcing_ratio = 1,
-                                                    adversarial = True, noise_std = self.grid['noise_std'])
+                    output_G = self.generator.model(
+                        seq2seq_input = input,
+                        input_lengths = seq_length_input,
+                        target = target,
+                        teacher_forcing_ratio = 1,
+                        adversarial = True,
+                        noise_std = self.grid['noise_std']
+                    )
+
                     # discriminator output D(G(z))
                     output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), fake_labels) #discriminator needs transpose input
                     # calculate loss function on the batch of fake examples
-                    error_D_fake = self.loss_function_D(output_D_G, fake_labels_flatten)
+                    error_D_fake = self.loss_function_D(
+                        output_D_G,
+                        fake_labels_flatten
+                    )
                     # calculate gradient
-                    error_D_fake.backward(retain_graph = True)
+                    error_D_fake.backward(retain_graph = True) # we need to retain backprop graph as this fragment is also used the generator's optimizer
                     
                     # sum gradients from computation both on real and fake examples
                     error_D = (error_D_real + error_D_fake) / 2
@@ -257,16 +266,25 @@ class AdversarialTraining:
                 #####
                 for _ in range(self.grid['G_multiple']):
                     self.optimiser_G.zero_grad()
-                    if (_ != 0) | (optim_D != True):
+                    if (_ != 0) | (optim_D != True): #output_G is not necessary to be computed for the first update step on a batch given the two conditiosn as this has already been done
                         # Generate summaries
-                        output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
-                                                        target = target, teacher_forcing_ratio = 1,
-                                                        adversarial = True, noise_std = self.grid['noise_std'])
-                    ## For the first term - log(D(G(x)))
-                    # FORWARD pass with updated discriminator
-                    output_D, real_labels_flatten = self.discriminator.forward(output_G.argmax(dim = 2).long().permute(1,0), real_labels)
+                        output_G = self.generator.model(
+                            seq2seq_input = input,
+                            input_lengths = seq_length_input,
+                            target = target,
+                            teacher_forcing_ratio = 1,
+                            adversarial = True,
+                            noise_std = self.grid['noise_std']
+                        )
 
-                    ## For the second term - CrossEntropy calculated over the generated sequence measuring the difference between generated and target summary
+                    ## Compute the first term of the loss function: - log(D(G(x)))
+                    # FORWARD pass with updated discriminator
+                    output_D, real_labels_flatten = self.discriminator.forward(
+                        output_G.argmax(dim = 2).long().permute(1,0),
+                        real_labels
+                    )
+
+                    ## Compute the second term of the loss function: CrossEntropy calculated over the generated sequence measuring the difference between generated and target summary
                     # Pack output and target padded sequence
                     ## Determine a length of output sequence based on the first occurrence of <eos>
                     seq_length_output = (output_G.argmax(2) == self.grid['text_dictionary'].word2index['eos']).int().argmax(0).cpu().numpy()
@@ -277,20 +295,31 @@ class AdversarialTraining:
                         (seq_length_output, seq_length_target)
                         ).max(0)
                     
-                    output_G = nn.utils.rnn.pack_padded_sequence(output_G,
-                                                               lengths = seq_length_loss,
-                                                               batch_first = False,
-                                                               enforce_sorted = False).to(self.device)
+                    # pack padded output headlines
+                    output_G = nn.utils.rnn.pack_padded_sequence(
+                        output_G,
+                        lengths = seq_length_loss,
+                        batch_first = False,
+                        enforce_sorted = False
+                    ).to(self.device)
                     
-                    target_padded = nn.utils.rnn.pack_padded_sequence(target,
-                                                               lengths = seq_length_loss,
-                                                               batch_first = False,
-                                                               enforce_sorted = False).to(self.device)
+                    # pack target headlines
+                    target_padded = nn.utils.rnn.pack_padded_sequence(
+                        target,
+                        lengths = seq_length_loss,
+                        batch_first = False,
+                        enforce_sorted = False
+                    ).to(self.device)
                     
-
-                    # Compute loss
-                    error_G_2 = self.loss_function_G(output_G[0], target_padded[0])
-                    error_G_1 = self.loss_function_D(output_D, real_labels_flatten)
+                    # Compute loss: G = G_1 * G_2
+                    error_G_2 = self.loss_function_G(
+                        output_G[0],
+                        target_padded[0]
+                    )
+                    error_G_1 = self.loss_function_D(
+                        output_D,
+                        real_labels_flatten
+                    )
                     error_G = error_G_1 * error_G_2
                     
                     # Calculate gradient
@@ -301,82 +330,143 @@ class AdversarialTraining:
                     del output_G, target_padded
                     torch.cuda.empty_cache()
                 
-                #### MEASUREMENT ####
+                #### MEASUREMENT #### - this returns results computed on validation set throughout the training to monitor the progress
+                ## Return: ROUGE-1, ROUGE-2, ROUGE-L, accuracy of discriminator
                 if batch % 20 == 0:
+                    # turn the generator and the discriminator to evalutaion mode
                     self.generator.model.eval()
                     self.discriminator.model.eval()
+                    
+                    # zero losses, ROUGE metrics, and accuracy for the discriminator
                     val_batch = 0
                     val_loss = 0
                     self.rouge1, self.rouge2, self.rougeL = 0, 0, 0
                     outputs_true = 0
+
+                    ### Run through batches###
                     for input, target, seq_length_input, seq_length_target in zip(input_val,
                                                                               target_val,
                                                                               input_val_lengths,
                                                                               target_val_lengths,
                                                                               ):
+                        # counter                                                        
                         val_batch += 1
-                        # Paragraphs
+                        
+                        # Put paragraphs to Torch.Tensor
                         input = torch.from_numpy(
                             input[:seq_length_input.max()]
                         ).long()
-                        # Summaries
+                        
+                        # Put headlines to Torch.Tensor and move them to GPU
                         target = torch.from_numpy(
-                        target[:seq_length_target.max()]
+                            target[:seq_length_target.max()]
                         ).long().to(self.device)           
                         
                         # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
                         ## GENERATOR perfrormance
-                        output_G = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
-                                                        target = target, teacher_forcing_ratio = 0,
-                                                        adversarial = False, noise_std = 0)
+                        output_G = self.generator.model(
+                            seq2seq_input = input,
+                            input_lengths = seq_length_input,
+                            target = target,
+                            teacher_forcing_ratio = 0,
+                            adversarial = False,
+                            noise_std = 0
+                        )
                         
-                        val_loss += self.validation_loss_eval(output_G, target, seq_length_target)
+                        ## add batch loss to the validation loss
+                        val_loss += self.validation_loss_eval(
+                            output_G,
+                            target,
+                            seq_length_target
+                        )
                         
-                        hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy()
+                        # Derive output headlines by restoring sentences from returned indices
+                        hypotheses = output_G.argmax(dim = 2).permute(1,0).cpu().numpy() # move hypothesis to CPU to be able run list comprehension below
                         hypotheses = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in hypothesis if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for hypothesis in hypotheses]
+                        
+                        # Derive target headlines by restoring sentences from returned indices
                         references = [' '.join([self.grid['headline_dictionary'].index2word[index] for index in ref if ( index != self.pad_idx) & (index != self.eos_idx)][1:]) for ref in target.permute(1,0).cpu().numpy()]
+                        
+                        # Calculate ROUGE metrics
                         ROUGE = [self.rouge_get_scores(hyp, ref) for hyp, ref in zip(hypotheses, references)]
                         self.rouge1 += ( (np.array([x[0]['rouge-1']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge1) / val_batch )
                         self.rouge2 += ( (np.array([x[0]['rouge-2']['f'] for x in ROUGE if x != 'drop']).mean() - self.rouge2) / val_batch )
                         self.rougeL += ( (np.array([x[0]['rouge-l']['f'] for x in ROUGE if x != 'drop']).mean() - self.rougeL) / val_batch )
                         
-                        ## DISCRIMINATOR performance
-                        output_D, real_labels_flatten = self.discriminator.forward(target.permute(1,0), real_labels) #discriminator needs transpose input
-                        outpud_D = output_D.detach().cpu().numpy()
-                        torch.cuda.empty_cache()
+                        ### DISCRIMINATOR performance
+                        ## (1) Run on real examples
+                        # compute discriminator's output
+                        output_D, real_labels_flatten = self.discriminator.forward(
+                            target.permute(1,0), #discriminator needs transpose input
+                            real_labels
+                        ) 
+                        outpud_D = output_D.detach().cpu().numpy() # move discriminator's output to CPU to be able run list comprehension below
+                        # cleaning to avoid running out of CUDA memory
+                        torch.cuda.empty_cache()                        
+                        # Derive Real/Fake labels produced by discriminator
                         output_labels = np.array(
                             [1 if x>=0 else 0 for x in outpud_D]
                             )
                         outputs_true += sum(output_labels == real_labels_flatten.cpu().numpy())
                         
-                        output_G = F.log_softmax(output_G, dim = 2).argmax(dim = 2).long()
-                        output_D_G, fake_labels_flatten = self.discriminator.forward(output_G.permute(1,0), fake_labels) #discriminator needs transpose input
+                        ## (2) Run on fake/generated examples
+                        # derive indexed words from generator's prediction and turn into long which is accepted by torch mudles
+                        output_G = F.log_softmax(output_G, dim = 2).argmax(dim = 2).long() 
+                        # compute discriminator's output
+                        output_D_G, fake_labels_flatten = self.discriminator.forward(
+                            output_G.permute(1,0), #discriminator needs transpose input
+                            fake_labels
+                        )
+                        # move output_D_G to CPU so that we can run list comprehension below 
                         outpud_D_G = output_D_G.detach().cpu().numpy()
+                        # cleaning to avoid running out of CUDA memory
                         torch.cuda.empty_cache()
+                        # Derive Real/Fake labels produced by discriminator
                         output_labels = np.array(
                             [1 if x>=0 else 0 for x in outpud_D_G]
                             )
                         outputs_true += sum(output_labels == fake_labels_flatten.cpu().numpy())
-                        # cleaning
+                        # cleaning to avoid running out of CUDA memory
                         del output_D, output_D_G
                         torch.cuda.empty_cache()
-                        
+
+                    # Compute accuracy and mean validation loss                        
                     acc = 100 * float(outputs_true) / (2*self.n_batches_val*self.grid['batch_size'])
                     val_loss /= val_batch
 
                     # Eventually we are mainly interested in the generator performance measured by ROUGE metrics and fooling discriminator (may be measured by accuracy)
-                    print(f'Epoch: {epoch+1:.0f}')
-                    print(f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.')
-                    print(f'ROUGE-1 = {100*self.rouge1:.3f} | ROUGE-2 = {100*self.rouge2:.3f} | ROUGE-l = {100*self.rougeL:.3f} | Discriminator accuracy = {acc:.2f} %.')
+                    print(
+                        f'Epoch: {epoch+1:.0f}'
+                    )
+                    print(
+                        f'Generator performance after {100*batch/self.n_batches:.2f} % of examples.'
+                    )
+                    print(
+                        f'ROUGE-1 = {100*self.rouge1:.3f} | ROUGE-2 = {100*self.rouge2:.3f} | ROUGE-l = {100*self.rougeL:.3f} | Discriminator accuracy = {acc:.2f} %.'
+                    )
+                    
+                    # turn the generator and discriminator back to the training mode
                     self.generator.model.train()
                     self.discriminator.model.train()
             
             # decrease learning rate for a generator after the epoch
             self.lr_scheduler.step()
+            # save the models' state and also the states of their optimizer
             self.save()
             
     def rouge_get_scores(self, hyp, ref):
       """
+      HELPER function for computing ROUGE. Some summaries are kind of flawed (empty) thus they are needed to drop.
+
+      :param hyp:
+        type: String
+        description: Output summary/headline returned by the model
+      :param ref:
+        type: String
+        description: Reference/target summary/headline
+
+      :return:
+        Either ROUGE scores for a given pair of hyp and ref, or "drop" if a summary is invalid
       """
       try:
         return self.rouge.get_scores(hyp, ref)
@@ -386,6 +476,20 @@ class AdversarialTraining:
     def validation_loss_eval(self, output_G, target, seq_length_target):
         """
         Function handling the course of computing Cross-Entropy loss.
+        
+        :param output_G:
+            type: Torch.Tensor
+            description: Probabilites produced by generators
+        :param target:
+            type: Torch.Tensor
+            description: Padded sequences of indexed words representing target summaries
+        :param seq_length_target:
+            type: Numpy.Array
+            description: An array containing the lengths of target summaries
+
+        :return loss:
+            type: Float
+            description: Cross-entropy loss (mean)
         """            
         # Pack output and target padded sequence
         ## Determine a length of output sequence based on the first occurrence of <eos>
@@ -397,50 +501,71 @@ class AdversarialTraining:
             (seq_length_output, seq_length_target)
             ).max(0)
         
-        output_G = nn.utils.rnn.pack_padded_sequence(output_G,
-                                                   lengths = seq_length_loss,
-                                                   batch_first = False,
-                                                   enforce_sorted = False).to(self.device)
+        # Pack padded generator's output and move to the GPU for the loss computation
+        output_G = nn.utils.rnn.pack_padded_sequence(
+            output_G,
+            lengths = seq_length_loss,
+            batch_first = False,
+            enforce_sorted = False
+        ).to(self.device)
         
-        target = nn.utils.rnn.pack_padded_sequence(target,
-                                                   lengths = seq_length_loss,
-                                                   batch_first = False,
-                                                   enforce_sorted = False).to(self.device)
+        # Pack padded target sequences and move thme to the GPU for the loss computation
+        target = nn.utils.rnn.pack_padded_sequence(
+            target,
+            lengths = seq_length_loss,
+            batch_first = False,
+            enforce_sorted = False
+        ).to(self.device)
+        
         # loss function
         loss = 0
-        loss += self.loss_function_G(output_G[0], target[0]).item()
+        loss += self.loss_function_G(
+            output_G[0],
+            target[0]
+        ).item()
         # cleaning
         del output_G, target, seq_length_output, seq_length_loss
         torch.cuda.empty_cache()
+        
+        #return loss
         return loss
     
     def generate_summaries(self, input_val, input_val_lengths, target_val, target_val_lengths):
         """
+        A function that is responsible for generating summaries.
+        Target summary is not actually used by this function, however, it is required to pass it to generator.model # this is desired to change
+
         :param input_val:
-            type:
-            description:
+            type: [seq_len, n_samples]
+            description: Input articles in the form of padded sequences of indexed words.
         :param input_val_lengths:
-            type:
-            description:
+            type: Numpy array: [n_samples,]
+            description: Length of paragraphs used for padding sequences to have the same length.
         :param target_val:
-            type:
-            description:
+            type: Numpy array: [seq_len, n_samples]
+            description: Taget summaries in the form of padded sequences of indexed words.
         :param target_val_lengths:
-            type:
-            description:
+            type: Numpy array: [n_samples,]
+            description: Length of summaries used for masking during the computation of loss function.
                 
-        :return sumaries:
-            type:
-            description:
+        :return summaries:
+            type: Numpy.Array
+            description: Summaries generated by the trained model.
         """
+        # Turn the generator to the eval mode
         self.generator.model.eval()
         
+        # Generate batches
         (input_val, input_val_lengths,
-        target_val, target_val_lengths) = self._generate_batches(padded_input = input_val,
-                                                                      input_lengths = input_val_lengths,
-                                                                      padded_target = target_val,
-                                                                      target_lengths = target_val_lengths)
+        target_val, target_val_lengths) = self._generate_batches(
+            padded_input = input_val,
+            input_lengths = input_val_lengths,
+            padded_target = target_val,
+            target_lengths = target_val_lengths
+        )
+        # create an empty list for storing output headlies
         OUTPUT = []
+        ### RUN through BATCHE###
         for input, target, seq_length_input, seq_length_target in zip(input_val,
                                                                       target_val,
                                                                       input_val_lengths,
@@ -448,20 +573,30 @@ class AdversarialTraining:
                                                                       ):
             ## FORWARD PASS
             # Prepare RNN-edible input - i.e. pack padded sequence
-            # trim input, target
+            
+            # trim input and put store it to Torch.Tensor
             input = torch.from_numpy(
                 input[:seq_length_input.max()]
                 ).long()
+            # trim target and put store it to Torch.Tensor and move to GPU
             target = torch.from_numpy(
                 target[:seq_length_target.max()]
                 ).long().to(self.device)
-                        
-            output = self.generator.model(seq2seq_input = input, input_lengths = seq_length_input,
-                                          target = target, teacher_forcing_ratio = 0,
-                                          adversarial = False, noise_std = 0)
+
+            # FORWARD PASS through generator            
+            output = self.generator.model(
+                seq2seq_input = input,
+                input_lengths = seq_length_input,
+                target = target,
+                teacher_forcing_ratio = 0,
+                adversarial = False,
+                noise_std = 0
+            )
+            # cleanin to avoid running out of CUDA memory
             del input, target
             torch.cuda.empty_cache()
             
+            # Store indexed word into output. These are stored again on CPU
             OUTPUT.append(
                 output.argmax(dim = 2).cpu().numpy()
                 )
@@ -470,33 +605,37 @@ class AdversarialTraining:
     
     def _generate_batches(self, padded_input, input_lengths, padded_target, target_lengths):
         """
+        A module responsible for generating batches.
+        At this stage, we prefer storing everythin on CPU as Numpy.Arrays.
+        It might be preferable to direcetly output Torch.Tensor to cut some operations during the training,
+
         :param input:
-            type:
-            description:
+            type: Numpy.Array: [seq_len, n_examples]
+            description: Input articles
         :param inout_lengths:
-            type:
-            description:
+            type: Numpy.Array: [n_examples,]
+            description: Lenghts of input articles
         :param target:
-            type:
-            description:
+            type: Numpy.Array: [seq_len, n_examples]
+            description: Target summaries
         :param target_lengths:
-            type:
-            description:
+            type: Numpy.Array: [n_examples]
+            description: Lenght of target summaries
             
         :return input_batches:
-            type:
-            description:
+            type: Numpy.Array: [n_batches, seq_len, batch_size]
+            description: Input articles splitted into individual batches
         :return input_lengths:
-            type:
-            description:
+            type: Numpy.Array: [n_batches, batch_size]
+            description: Lenghts of input articles splitted into individual batches
         :return target_batches:
-            type:
-            description:
+            type: Numpy.Array: [n_batches, seq_len, batch_size]
+            description: Target summaries splitted into individual batches
         :return target_lengths:
-            type:
-            description:
+            type: Numpy.Array: [n_batches, batch_size]
+            description: Lenghts of target summaries splitted into individual batches
         """
-        # determine a number of batches
+        # determine a number of batches; here we drop a few examples which does not constitute the whole batch
         n_batches = padded_input.shape[1] // self.grid['batch_size']
         self.n_batches = n_batches
         
@@ -516,13 +655,7 @@ class AdversarialTraining:
         target_lengths = np.array(
             np.split(target_lengths[:(n_batches * self.grid['batch_size'])], n_batches, axis = 0)
             )
-        
-        """
-        # trim sequences in individual batches
-        for batch in range(n_batches):
-            input_batches[batch] = input_batches[batch, input_lengths[batch].max():, :, :]
-            target_batches[batch] = target_batches[batch, target_lengths[batch].max():, :]
-        """
+
         # return prepared data
         return (input_batches, input_lengths,
                 target_batches, target_lengths)
@@ -538,25 +671,39 @@ class AdversarialTraining:
     
     def save(self):
         """
+        A module which saves the models' states and also the states of their optimizer sinto the predefined path given by the model name 
         """
         # Save generator state and state of its optimizer
-        torch.save(self.generator.model.state_dict(), "../data/Results/{}.pth".format(self.grid['model_name']))
-        torch.save(self.optimiser_G.state_dict(), "../data/Results/opt_g_{}.pth".format(self.grid['model_name']))
+        torch.save(
+            self.generator.model.state_dict(),
+            "../data/Results/{}.pth".format(self.grid['model_name'])
+        )
+        torch.save(
+            self.optimiser_G.state_dict(),
+            "../data/Results/opt_g_{}.pth".format(self.grid['model_name'])
+        )
 
         # Save discriminator state and state of its optimizer
-        torch.save(self.discriminator.model.state_dict(), "../data/Results/disc_{}.pth".format(self.grid['model_name']))
-        torch.save(self.optimiser_D.state_dict(), "../data/Results/opt_d_{}.pth".format(self.grid['model_name']))
+        torch.save(
+            self.discriminator.model.state_dict(),
+            "../data/Results/disc_{}.pth".format(self.grid['model_name'])
+        )
+        torch.save(
+            self.optimiser_D.state_dict(),
+            "../data/Results/opt_d_{}.pth".format(self.grid['model_name'])
+        )
 
         # save a piece of information containing a number of epoch done
-        f = open(f"epochs_{self.grid['model_name']}.txt", 'a')
+        f = open(
+            f"epochs_{self.grid['model_name']}.txt",
+            'a'
+        )
         f.write(str(self.epoch+1))
         f.close()
     
     def load(self):
         """
-        :param name_path:
-            type:
-            description:
+        Loading models' states and the states of their optimizers.
         """
         try:
             
@@ -579,6 +726,6 @@ class AdversarialTraining:
             # load startin epoch
             self.start_epoch = int(np.loadtxt(f"epochs_{self.grid['model_name']}.txt"))
             print('Model state has been successfully loaded.')
-        except:
+        except: # this is used when above files are not available, i.e. when the training with a given model_name is run for the first time
             self.start_epoch = 0
             print('No state has been loaded.')
