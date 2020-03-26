@@ -1,14 +1,18 @@
 """
-GANs for Abstractive Text Summarization
-Project for Statistical Natural Language Processing (COMP0087)
-University College London
+# Headline Generation via Adversarial Training
+## Project for Statistical Natural Language Processing (COMP0087)
+## University College London
+
 File: Attention_seq2seq.py
 Description of our model:
 Collaborators:
-    - Daniel Stancl
-    - Dorota Jagnesakova
-    - Guoliang HE
-    - Zakhar Borok`
+    - Daniel Stancl (ucabds7@ucl.ac.uk)
+    - Guoliang HE (ucabggh@ucl.ac.uk)
+    - Dorota Jagnesakova (ucabdj1@ucl.ac.uk)
+    - Zakhar Borok (zcabzbo@ucl.ac.uk)
+
+Description: This file contains the script for our generator.\n We use seq2seq model with RNN (with GRU) Encoder-Decoder enhanced by attention mechanism to improve performance.
+Auxiliary sources:
 """
 
 import numpy as np
@@ -327,11 +331,11 @@ class _Seq2Seq(nn.Module):
 
             teacher_forcing_ratio -> int: probability of teacher forcing
 
-            input_lengths ++++++
+            input_lengths -> Numpy.Array: [batch_size]: used for masking in decoder
 
-            adversarial training +++++
+            adversarial training -> boolean: indiciates if adversarial trainining is running as this enables to introduce noise to encoder's hidden state.
 
-            noise_std +++++++
+            noise_std -> float (non-negative): standard deviation of normal distribution used for generating noise injcted into encoder's hidden state
 
         Returns:
             outputs -> Tensor: [trg_len, batch_size, trg_vocab_size] 
