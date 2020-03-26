@@ -20,7 +20,6 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 
-# Encoder
 class _Encoder(nn.Module):
 
     def __init__(self, emb_dim, enc_hid_dim, dec_hid_dim, rnn_num_layers,
@@ -395,7 +394,7 @@ class _Seq2Seq(nn.Module):
 
     def load(self, name_path):
         """
-        laod the model to name_path
+        load the model to name_path
         """
         self.load_state_dict(torch.load(name_path))
         self.eval()
