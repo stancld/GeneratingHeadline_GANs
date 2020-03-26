@@ -48,20 +48,18 @@ class _CNN_text_clf(nn.Module):
     def forward(self, embedded):
         '''
         Args:
-          embedded type -> torch.Tensor
-
-          embedded dim -> [batch_size,seq_len,embed_dim] 
+          embedded -> Tensor, [batch_size,seq_len,embed_dim] 
 
           desirable input to CNN: (N, C_in, H, W) = [batch_size,in_channel,seq_len,embed_dim]
 
-          output -> [batch_size,] boolean judgement
+          Returns: -> Tensor [batch_size,] 
         '''
 
         x = embedded.unsqueeze(1)
-        # -> [batch_size,in_channel,seq_len,embed_dim]
+        # [batch_size,in_channel,seq_len,embed_dim]
 
         x1 = F.relu(self.conv1(x)).squeeze(3)
-        # -> [batch_size,out_channel,seq_len]
+        # [batch_size,out_channel,seq_len]
 
         x1 = F.max_pool1d(x1, x1.size(2)).squeeze(
             2)  # [batch_size,out_channel]
