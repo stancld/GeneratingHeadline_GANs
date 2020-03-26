@@ -1,3 +1,23 @@
+"""
+# Headline Generation via Adversarial Training
+## Project for Statistical Natural Language Processing (COMP0087)
+## University College London
+
+File: Attention_seq2seq.py
+Description of our model:
+Collaborators:
+    - Daniel Stancl (ucabds7@ucl.ac.uk)
+    - Guoliang HE (ucabggh@ucl.ac.uk)
+    - Dorota Jagnesakova (ucabdj1@ucl.ac.uk)
+    - Zakhar Borok (zcabzbo@ucl.ac.uk)
+
+Description: This file contains the script for our discriminator represented by convolutional neural networks suited for sentence classification.
+Auxiliary sources:
+    - https://github.com/Shawn1993/cnn-text-classification-pytorch/blob/master/model.py
+"""
+
+
+# ----- Settings -----
 import time
 import torch
 import torch.nn as nn

@@ -13,8 +13,10 @@ Collaborators:
 
 Description: This file contains the script for our generator.\n We use seq2seq model with RNN (with GRU) Encoder-Decoder enhanced by attention mechanism to improve performance.
 Auxiliary sources:
+    - https://github.com/bentrevett/pytorch-seq2seq
 """
 
+# ----- Settings -----
 import numpy as np
 import pandas as pd
 import torch
