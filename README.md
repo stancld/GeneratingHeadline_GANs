@@ -6,7 +6,7 @@
 - Daniel Stancl (ucabds7@ucl.ac.uk)
 - Guoliang HE (ucabggh@ucl.ac.uk)
 - Dorota Jagnesakova (ucabdj1@ucl.ac.uk)
-- Zakhar Borok (zcabzbo@ucl.ac.uk)-----
+- Zakhar Borok (zcabzbo@ucl.ac.uk)
 
 ### Abstract
 *To be added*
