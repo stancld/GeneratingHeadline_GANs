@@ -4,7 +4,6 @@
 ## University College London
 
 File: Attention_seq2seq.py
-Description of our model:
 Collaborators:
     - Daniel Stancl (ucabds7@ucl.ac.uk)
     - Guoliang HE (ucabggh@ucl.ac.uk)

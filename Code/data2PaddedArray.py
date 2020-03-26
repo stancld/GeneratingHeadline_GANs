@@ -1,18 +1,18 @@
 """
-GANs for Abstractive Text Summarization
-Project for Statistical Natural Language Processing (COMP0087)
-University College London
+# Headline Generation via Adversarial Training
+## Project for Statistical Natural Language Processing (COMP0087)
+## University College London
 
 File: data2PaddedArray.py
-
-Description of our model:
-
 Collaborators:
-    - Daniel Stancl
-    - Dorota Jagnesakova
-    - Guoliang HE
-    - Zakhar Borok`
+    - Daniel Stancl (ucabds7@ucl.ac.uk)
+    - Guoliang HE (ucabggh@ucl.ac.uk)
+    - Dorota Jagnesakova (ucabdj1@ucl.ac.uk)
+    - Zakhar Borok (zcabzbo@ucl.ac.uk)
+
+Description: This file contains a utility function responsible for padding articles and summaries\n and storing them in numpy arrays.
 """
+# ----- Settings -----
 import numpy as np
 
 def data2PaddedArray(input, target, text_dictionary:dict, embeddings):

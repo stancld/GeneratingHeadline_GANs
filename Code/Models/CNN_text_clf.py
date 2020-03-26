@@ -3,8 +3,7 @@
 ## Project for Statistical Natural Language Processing (COMP0087)
 ## University College London
 
-File: Attention_seq2seq.py
-Description of our model:
+File: CNN_text_clf.py
 Collaborators:
     - Daniel Stancl (ucabds7@ucl.ac.uk)
     - Guoliang HE (ucabggh@ucl.ac.uk)

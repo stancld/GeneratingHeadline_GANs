@@ -1,17 +1,19 @@
 """
-GANs for Abstractive Text Summarization
-Project for Statistical Natural Language Processing (COMP0087)
-University College London
+# Headline Generation via Adversarial Training
+## Project for Statistical Natural Language Processing (COMP0087)
+## University College London
 
 File: text_preprocessing.py
-
 Collaborators:
-    - Daniel Stancl
-    - Dorota Jagnesakova
-    - Guoliang HE
-    - Zakhar Borok`
-"""
+    - Daniel Stancl (ucabds7@ucl.ac.uk)
+    - Guoliang HE (ucabggh@ucl.ac.uk)
+    - Dorota Jagnesakova (ucabdj1@ucl.ac.uk)
+    - Zakhar Borok (zcabzbo@ucl.ac.uk)
 
+Description: This file contains the code for a function handling initial text preprocessing used nin our datata.
+CREDIT TO: https://github.com/dipanjanS/practical-machine-learning-with-python
+"""
+# ----- Settings -----
 import numpy as np
 import pandas as pd
 import re

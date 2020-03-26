@@ -1,7 +1,17 @@
-# -*- coding: utf-8 -*-
 """
-Created on Mon Aug 01 01:11:02 2016
-@author: DIP
+# Headline Generation via Adversarial Training
+## Project for Statistical Natural Language Processing (COMP0087)
+## University College London
+
+File: contractions.py
+Collaborators:
+    - Daniel Stancl (ucabds7@ucl.ac.uk)
+    - Guoliang HE (ucabggh@ucl.ac.uk)
+    - Dorota Jagnesakova (ucabdj1@ucl.ac.uk)
+    - Zakhar Borok (zcabzbo@ucl.ac.uk)
+
+Description: This file contains a dictionary of contraction in a natural language.
+FULL CREDIT TO: https://github.com/dipanjanS/practical-machine-learning-with-python
 """
 
 CONTRACTION_MAP = {
