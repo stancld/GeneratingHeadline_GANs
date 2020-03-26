@@ -52,7 +52,8 @@ class _CNN_text_clf(nn.Module):
 
           desirable input to CNN: (N, C_in, H, W) = [batch_size,in_channel,seq_len,embed_dim]
 
-          Returns: -> Tensor [batch_size,] 
+          Returns: 
+            x -> Tensor [batch_size,] 
         '''
 
         x = embedded.unsqueeze(1)

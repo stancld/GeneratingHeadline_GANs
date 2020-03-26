@@ -351,11 +351,15 @@ class _Seq2Seq(nn.Module):
     def forward(self, seq2seq_input, input_lengths, target, teacher_forcing_ratio=0.5, adversarial=False, noise_std=0.0):
         """
         Args:
-            seq2seq_input -> Tensor: [seq_len, batch size,Enc]
+            seq2seq_input -> Tensor: [seq_len, batch size]
             target -> Tensor: [trg_len, batch size,output_dim]
+            teacher_forcing_ratio -> int: probability of teacher forcing
+            input_lengths ++++++
+            adversarial training +++++
+            noise_std +++++++
 
         Returns:
-
+            outputs -> Tensor: [trg_len, batch_size, trg_vocab_size] 
         """
         # teacher_forcing_ratio is probability to use teacher forcing
         # e.g. if teacher_forcing_ratio is 0.75 we use teacher forcing 75% of the time
@@ -393,8 +397,10 @@ class _Seq2Seq(nn.Module):
             #output, hidden = self.decoder(dec_input, hidden, encoder_outputs)
             output, hidden, a_ = self.decoder(
                 dec_input, hidden, encoder_outputs, mask)
+
             # cleaning
             del a_
+
             # place predictions in a tensor holding predictions for each token
             outputs[t] = output.cpu()
 
@@ -404,26 +410,21 @@ class _Seq2Seq(nn.Module):
             # get the highest predicted token from our predictions
             top1 = output.argmax(1)
 
-            # if teacher forcing, use actual next token as next input
-            # if not, use predicted token
+            # if teacher forcing, use actual next token as next input; else, use predicted token
             dec_input = target[t] if teacher_force else top1
             dec_input = dec_input.cpu().numpy()
             torch.cuda.empty_cache()
         return outputs.to(self.device)
 
     def save(self, name_path):
-        """
-        :param name_path:
-            type:
-            description:
-        """
-        torch.save(self.state_dict(), name_path)  # e.g. 'encoder_model.pt'
+        '''
+        save the model to name_path
+        '''
+        torch.save(self.state_dict(), name_path)
 
     def load(self, name_path):
-        """
-        :param name_path:
-            type:
-            description:
-        """
+        '''
+        laod the model to name_path
+        '''
         self.load_state_dict(torch.load(name_path))
         self.eval()
