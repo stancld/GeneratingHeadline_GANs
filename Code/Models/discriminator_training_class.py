@@ -48,7 +48,7 @@ class Discriminator_utility():
         self.device = kwargs['device']
 
         self.model = _CNN_text_clf(**self.grid).to(self.device)
-        self.m = copy.deepcopy(self.model)
+        self.best_model = copy.deepcopy(self.model)
 
         self.embedding_layer = nn.Embedding.from_pretrained(
             torch.from_numpy(embedding).to(self.device), freeze=True).to(self.device)
@@ -86,7 +86,7 @@ class Discriminator_utility():
 
             if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss
-                self.m = copy.deepcopy(self.model)
+                self.best_model = copy.deepcopy(self.model)
                 self.save()
             print(f'Epoch: {epoch+1}:')
             print(f'Train Loss: {train_loss:.3f}')
@@ -184,7 +184,7 @@ class Discriminator_utility():
                 local_batch  -> Tensor: [batch_size, seq_len]
                 local_labels -> Tensor: [batch_size,] 
         '''
-        self.m.eval()
+        self.best_model.eval()
         outputs_true = 0
         for local_batch, local_labels in self._generate_batches(X_test, y_test):
             #
@@ -194,7 +194,7 @@ class Discriminator_utility():
             local_batch_embedded = self._embedding_layer(local_batch)
             # -> [batch_size,seq_len,emb_dim]
 
-            local_output = self.m(local_batch_embedded)
+            local_output = self.best_model(local_batch_embedded)
             local_output = local_output.detach().cpu().numpy()
             local_output = np.array(
                 [1 if x >= 0 else 0 for x in local_output]
@@ -256,7 +256,7 @@ class Discriminator_utility():
         """
         save the model in default path
         """
-        torch.save(self.m.state_dict(
+        torch.save(self.best_model.state_dict(
         ), "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
         torch.save(self.model.state_dict(
         ), "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
@@ -269,7 +269,7 @@ class Discriminator_utility():
             self.model.load_state_dict(torch.load(
                 "../data/Results/discriminator_{}.pth".format(self.grid['model_name'])))
             self.model.eval()
-            self.m = copy.deepcopy(self.model)
+            self.best_model = copy.deepcopy(self.model)
         except:
             pass
 
@@ -310,15 +310,15 @@ class Discriminator_utility():
             this function automates epochs training and evaluation with X_train, y_train, X_test, y_test
 
             Arg:
-                X_train [N_samples,seq_len] -> word indices type long()
-                y_train [N_samples,]        -> boolean tensor 
+                X_train [N_samples,seq_len] -> Tensor word indices type long()
+                y_train [N_samples,]        -> Tensor boolean tensor 
 
-                X_test [N_samples,seq_len]  -> word indices type long()
-                y_test [N_samples,]         -> boolean tensor 
+                X_test [N_samples,seq_len]  -> Tensor word indices type long()
+                y_test [N_samples,]         -> Tensor boolean tensor 
                 
             Returns:
                 best_valid_loss
-                m -> model that gives the best_valid_loss
+                best_model: model that gives the best_valid_loss
 
             #####
             Training: training(X_train, y_train)
