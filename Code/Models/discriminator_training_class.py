@@ -218,8 +218,9 @@ class Discriminator_utility():
         To embedd x 
 
         Args: 
-            input x -> [N_samples,seq_len]
-            output -> [N_samples,seq_len,embedding_dimension]
+            x -> index Tensor.long() [N_samples,seq_len]
+        Returns
+            x -> embedded Tensor [N_samples,seq_len,embedding_dimension]
         '''
 
         return self.embedding_layer(x).float()
@@ -229,17 +230,16 @@ class Discriminator_utility():
         This function to generate batch for training and evaluation 
 
         Args:
-            data type numpy.py or torch.Tensor
 
-            input:
-                bag of summary: [N_summary, seq_len]  seq_len is a list of token index
-                summary label: [N_summary,] boolean; 
+        bag of summary -> Tensor/ ndarray [N_summary, seq_len]; token index
+        summary label -> Tensor/ ndarray [N_summary,] boolean; 
 
-            output ->:
-                dataloader -> (x,y) each iteration will give one local batch 
+        Returns:
+                iterable dataloader(x,y)
+
                 where:
-                x ->[batch_size, seq_len]
-                y ->[batch_size,] boolean
+                x -> Tensor/ ndarray: [batch_size, seq_len]
+                y -> Tensor/ ndarray: [batch_size,] boolean
         """
         if torch.is_tensor(summary_bag):
             pass
@@ -254,8 +254,7 @@ class Discriminator_utility():
 
     def save(self):
         """
-        Args:
-
+        save the model in default path
         """
         torch.save(self.m.state_dict(
         ), "../data/Results/discriminator_{}.pth".format(self.grid['model_name']))
@@ -264,8 +263,7 @@ class Discriminator_utility():
 
     def load(self):
         """
-        Args:
-
+        load the model in default path
         """
         try:
             self.model.load_state_dict(torch.load(
@@ -312,14 +310,13 @@ class Discriminator_utility():
             this function automates epochs training and evaluation with X_train, y_train, X_test, y_test
 
             Arg:
-                input:
                 X_train [N_samples,seq_len] -> word indices type long()
                 y_train [N_samples,]        -> boolean tensor 
 
                 X_test [N_samples,seq_len]  -> word indices type long()
                 y_test [N_samples,]         -> boolean tensor 
                 
-                output:
+            Returns:
                 best_valid_loss
                 m -> model that gives the best_valid_loss
 
@@ -348,8 +345,6 @@ class Discriminator_utility():
             this function classifies the embedded sequence 
             
             Args:
-
-            embedded type -> torch.Tensor
-            embedded dim -> [batch_size,seq_len,embed_dim] 
+                embedded -> Tensor: [batch_size,seq_len,embed_dim] 
           '''
         )
