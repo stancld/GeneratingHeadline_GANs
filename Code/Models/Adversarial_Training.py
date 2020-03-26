@@ -33,30 +33,23 @@ exec(open('Code/Models/discriminator_training_class.py').read())
 # Class
 class AdversarialTraining:
     """
+    Class utuilizing generator and discriminator training utilities 
+    and applied them to adversarial training defined in the paper.
     """
     def __init__(self, generator_class, discriminator_class, optimiser_D, optimiser_G, **kwargs):
         """
-        :param generator:
-            type:
-            description:                
+        :param generator_class:
+            type: Class
+            description: Initialized class for a training of the generator               
         :param discriminator:
-            type:
-            description:
-        :param loss_function:
-            type:
-            description:
-        :param optimiser:
-            type:
-            description:
-        :param batch_size:
-            type:
-            description:
-        :param text_dictionary:
-            type:
-            description:
-        :param embeddings:
-            type:
-            description:
+            type: Class
+            description: Initialized class for a training of the discriminator
+        :param optimiser_D:
+            type: torch.optim
+            description: Optimizer class used for a training of the discriminator
+        :param optimiser_G:
+            type: torch.optim
+            description: Optimizer class used for a training of the generator
         """
         # Grid
         self.grid = {'max_epochs': kwargs['max_epochs'],
