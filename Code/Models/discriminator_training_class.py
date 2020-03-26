@@ -204,6 +204,7 @@ class Discriminator_utility():
 
     def forward(self, X, y):
         """
+        ??????????
         """
         X, y = X.to(self.device), y.flatten().to(self.device)
         # pass through embedding layer
@@ -235,11 +236,11 @@ class Discriminator_utility():
         summary label -> Tensor/ ndarray [N_summary,] boolean; 
 
         Returns:
-                iterable dataloader(x,y)
+            iterable dataloader(x,y)
 
-                where:
-                x -> Tensor/ ndarray: [batch_size, seq_len]
-                y -> Tensor/ ndarray: [batch_size,] boolean
+            where:
+            x -> Tensor/ ndarray: [batch_size, seq_len]
+            y -> Tensor/ ndarray: [batch_size,] boolean
         """
         if torch.is_tensor(summary_bag):
             pass

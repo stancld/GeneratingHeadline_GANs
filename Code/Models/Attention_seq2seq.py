@@ -20,10 +20,9 @@ import torch.optim as optim
 from torch.autograd import Variable
 
 
-### Encoder
+# Encoder
 class _Encoder(nn.Module):
-    """
-    """
+
     def __init__(self, emb_dim, enc_hid_dim, dec_hid_dim, rnn_num_layers,
                  dropout, embeddings, device):
         """
@@ -49,7 +48,7 @@ class _Encoder(nn.Module):
         super().__init__()
         self.rnn = nn.GRU(input_size=emb_dim,
                           hidden_size=enc_hid_dim,
-                          num_layers = rnn_num_layers,
+                          num_layers=rnn_num_layers,
                           bidirectional=True)
         self.fc = nn.Linear(enc_hid_dim * 2, dec_hid_dim)
         self.dropout = nn.Dropout(dropout)
@@ -58,38 +57,36 @@ class _Encoder(nn.Module):
 
     def forward(self, enc_input, input_lengths):
         """
-        :param enc_input:
-            type:
-            description:
-                
-        :return output:
-            type:
-            description:
-        :retun hidden:
-            type:
-            description:
+        Args:
+            enc_input -> Tensor: [enc_input_len, batch size]
+            input_lengths +++++++
+
+        Returns:
+            outputs -> Tensor: [enc_seq_len, batch size, enc hid dim * 2]
+            hidden -> Tensor: [batch size, dec hid dim]
         """
-        # enc_input = [enc_input_len, batch size]
 
         # embedding and dropout layer
         embedded = self.dropout(
             torch.tensor(
-                [[self.embeddings[x] for x in enc_input[:, seq]] for seq in range(enc_input.shape[1])]
-                ).permute(1,0,2).to(self.device)
-            ).float() #[enc_input_len, batch size, emb_dim]
-        
-        #pack padded_layers
-        
+                [[self.embeddings[x] for x in enc_input[:, seq]]
+                    for seq in range(enc_input.shape[1])]
+            ).permute(1, 0, 2).to(self.device)
+        ).float()  # [enc_input_len, batch size, emb_dim]
+
+        # pack padded_layers
+
         embedded = nn.utils.rnn.pack_padded_sequence(embedded, input_lengths)
 
         # feed through RNN
         outputs, hidden = self.rnn(embedded)
-        #cleaning
+
+        # cleaning
         del embedded
         torch.cuda.empty_cache()
-        
-        #unpacking
-        outputs, _ = nn.utils.rnn.pad_packed_sequence(outputs) 
+
+        # unpacking
+        outputs, _ = nn.utils.rnn.pad_packed_sequence(outputs)
 
         # outputs = [enc_input len, batch size, hid dim * num directions]
         # hidden = [n layers * num directions, batch size, hid dim]
@@ -105,22 +102,18 @@ class _Encoder(nn.Module):
         hidden = torch.tanh(
             self.fc(torch.cat((hidden[-2, :, :], hidden[-1, :, :]), dim=1)))
 
-        # outputs = [src len, batch size, enc hid dim * 2]
-        # hidden = [batch size, dec hid dim]
-        return outputs, hidden     
-        
-### Attention
+        return outputs, hidden
+
+
 class _Attention(nn.Module):
     """
     """
+
     def __init__(self, enc_hid_dim, dec_hid_dim):
         """
-        :param enc_hid_dim:
-            type:
-            description:
-        :param dec_hid_dim:
-            type:
-            description:
+        Args:
+            enc_hid_dim -> int: the encoder hidden dimension
+            dec_hid_dim -> int: the decoder hidden dimension
         """
         super().__init__()
 
@@ -138,7 +131,7 @@ class _Attention(nn.Module):
         :param mask:
             type:
             description:
-        
+
         :return softmax(attention):
             type:
             description:
@@ -149,31 +142,34 @@ class _Attention(nn.Module):
 
         batch_size = encoder_outputs.shape[1]
         enc_seq_len = encoder_outputs.shape[0]
-        
+
         # repeat decoder hidden state enc_seq_len times
         hidden = hidden.unsqueeze(1).repeat(1, enc_seq_len, 1)
-        
+
         encoder_outputs = encoder_outputs.permute(1, 0, 2)
-    
+
         # hidden = [batch size, enc_seq_len, dec hid dim]
         # encoder_outputs = [batch size, enc_seq_len, enc hid dim * 2]
 
         energy = torch.tanh(
-            self.attn(torch.cat((hidden, encoder_outputs), dim=2))) # energy = [batch size, enc_seq_len, dec hid dim]
-    
-        attention = self.v(energy).squeeze(2) # attention= [batch size, enc_seq_len]
+            self.attn(torch.cat((hidden, encoder_outputs), dim=2)))  # energy = [batch size, enc_seq_len, dec hid dim]
+
+        # attention= [batch size, enc_seq_len]
+        attention = self.v(energy).squeeze(2)
         # ignoring
         attention = attention.masked_fill(mask == 0, -1e12)
         # cleaning
         del energy, encoder_outputs, hidden
         torch.cuda.empty_cache()
-        
-        #return
+
+        # return
         return F.softmax(attention, dim=1)
-    
+
+
 class _Decoder(nn.Module):
     """
     """
+
     def __init__(self, output_dim, enc_hid_dim,  dec_hid_dim, rnn_num_layers,
                  dropout, attention, embeddings, device):
         """
@@ -207,7 +203,7 @@ class _Decoder(nn.Module):
         #self.embedding = nn.Embedding(output_dim, output_dim)
 
         self.rnn = nn.GRU((enc_hid_dim * 2) + embeddings.shape[1], dec_hid_dim,
-                          num_layers = rnn_num_layers)
+                          num_layers=rnn_num_layers)
 
         self.fc_out = nn.Linear(
             (enc_hid_dim * 2) + dec_hid_dim + embeddings.shape[1], output_dim)
@@ -227,7 +223,7 @@ class _Decoder(nn.Module):
         :param encoder_outputs:
             type:
             description:
-                
+
         :return prediction:
             type:
             description:
@@ -243,24 +239,28 @@ class _Decoder(nn.Module):
         embedded = self.dropout(
             torch.tensor(
                 [self.embeddings[x] for x in dec_input]
-                ).to(self.device)
-            ).float().unsqueeze(0)
+            ).to(self.device)
+        ).float().unsqueeze(0)
 
         attention = (
             self.attention(hidden, encoder_outputs, mask)
-            ).unsqueeze(1)  # attention = [batch size, 1, enc_seq_len]
+        ).unsqueeze(1)  # attention = [batch size, 1, enc_seq_len]
 
-        encoder_outputs = encoder_outputs.permute(1, 0, 2)  # encoder_outputs = [batch size, enc_seq_len, enc hid dim * 2]
-        
-        weighted = torch.bmm(attention, encoder_outputs)    # weighted = [batch size, 1, enc hid dim * 2]
-        
-        weighted = weighted.permute(1, 0, 2) # weighted = [1, batch size, enc hid dim * 2]
+        # encoder_outputs = [batch size, enc_seq_len, enc hid dim * 2]
+        encoder_outputs = encoder_outputs.permute(1, 0, 2)
+
+        # weighted = [batch size, 1, enc hid dim * 2]
+        weighted = torch.bmm(attention, encoder_outputs)
+
+        # weighted = [1, batch size, enc hid dim * 2]
+        weighted = weighted.permute(1, 0, 2)
 
         # print('embedded',embedded.size())
-        rnn_input = torch.cat((embedded, weighted), dim=2).float()  # rnn_input = [1, batch size, (enc hid dim * 2) + dec_emb dim]
-        
+        # rnn_input = [1, batch size, (enc hid dim * 2) + dec_emb dim]
+        rnn_input = torch.cat((embedded, weighted), dim=2).float()
+
         output, hidden = self.rnn(rnn_input, hidden.unsqueeze(0).float())
-        
+
         # output = [seq len, batch size, dec hid dim * n directions]
         # hidden = [n layers * n directions, batch size, dec hid dim]
 
@@ -273,22 +273,24 @@ class _Decoder(nn.Module):
         embedded = embedded.squeeze(0)
         output = output.squeeze(0)
         weighted = weighted.squeeze(0)
-        
+
         prediction = self.fc_out(
             torch.cat((output, weighted, embedded), dim=1)
-            )
+        )
 
         # prediction = [batch size, output dim]
-        
+
         # clearing GPU memory
         del embedded, output, weighted
         torch.cuda.empty_cache()
-        
+
         return prediction, hidden.squeeze(0), attention.squeeze(1)
-    
+
+
 class _Seq2Seq(nn.Module):
     """
     """
+
     def __init__(self, encoder, decoder, device, embeddings, text_dictionary):
         """
         :param encoder:
@@ -314,61 +316,47 @@ class _Seq2Seq(nn.Module):
         self.device = device
         self.embeddings = embeddings
         self.text_dictionary = text_dictionary
-        
+
     def __mask__(self, input):
         """
         :param input:
             type:
             description:
-        
+
         :return mask:
             type:
             description:
         """
         return torch.tensor(
             (input != self.text_dictionary['<pad>'])
-            ).to(self.device).permute(1, 0)
-    
+        ).to(self.device).permute(1, 0)
+
     def __mask_from_seq_lengths__(self, input_lengths):
         """
         :param input_lengths:
             type:
             description:
-        
+
         :return mask:
             type:
             description:
         """
         return torch.from_numpy(
             np.array(
-                [np.c_[np.ones((1, i)), np.zeros((1, input_lengths.max() - i))].reshape(-1) for i in input_lengths]
-                )
-            ).to(self.device)
+                [np.c_[np.ones((1, i)), np.zeros(
+                    (1, input_lengths.max() - i))].reshape(-1) for i in input_lengths]
+            )
+        ).to(self.device)
 
-    def forward(self, seq2seq_input, input_lengths, target, teacher_forcing_ratio=0.5, adversarial = False, noise_std = 0.0):
+    def forward(self, seq2seq_input, input_lengths, target, teacher_forcing_ratio=0.5, adversarial=False, noise_std=0.0):
         """
-        :param seq2seq_input:
-            type:
-            description:
-        :param input_lengths:
-            type:
-            description:
-        :param target:
-            type:
-            description:
-        :param teacher_forcing_ratio:
-            type:
-            description:
-        :param adversarial:
-            type:
-            description:
-                
-        :return outputs:
-            type:
-            description:
+        Args:
+            seq2seq_input -> Tensor: [seq_len, batch size,Enc]
+            target -> Tensor: [trg_len, batch size,output_dim]
+
+        Returns:
+
         """
-        # seq2seq_input = [seq_len, batch size,Enc]
-        # target = [trg_len, batch size,output_dim]
         # teacher_forcing_ratio is probability to use teacher forcing
         # e.g. if teacher_forcing_ratio is 0.75 we use teacher forcing 75% of the time
 
@@ -383,38 +371,39 @@ class _Seq2Seq(nn.Module):
         # encoder_outputs is all hidden states of the input sequence, back and forwards
         # hidden is the final forward and backward hidden states, passed through a linear layer
         encoder_outputs, hidden_ = self.encoder(seq2seq_input, input_lengths)
-        
+
         # introduce noise if adversarial = True
         if (adversarial == True) & (np.random.random() > .5):
             hidden = hidden_.clone() + torch.from_numpy(
-                np.random.normal(0, noise_std, size = hidden_.shape)
-                ).to(self.device).float()
+                np.random.normal(0, noise_std, size=hidden_.shape)
+            ).to(self.device).float()
             hidden = hidden.float()
         else:
             hidden = hidden_
-        
+
         # check: make dimension consistent
         dec_input = target[0]
         mask = self.__mask_from_seq_lengths__(input_lengths)
-        
+
         # print('dec_input dim:',dec_input.size())
 
         for t in range(1, trg_len):
             # insert dec_input token embedding, previous hidden state and all encoder hidden states
             # receive output tensor (predictions) and new hidden state
             #output, hidden = self.decoder(dec_input, hidden, encoder_outputs)
-            output, hidden, a_ = self.decoder(dec_input, hidden, encoder_outputs, mask)
+            output, hidden, a_ = self.decoder(
+                dec_input, hidden, encoder_outputs, mask)
             # cleaning
             del a_
             # place predictions in a tensor holding predictions for each token
             outputs[t] = output.cpu()
-            
+
             # decide if we are going to use teacher forcing or not
             teacher_force = np.random.random() < teacher_forcing_ratio
 
             # get the highest predicted token from our predictions
             top1 = output.argmax(1)
-                
+
             # if teacher forcing, use actual next token as next input
             # if not, use predicted token
             dec_input = target[t] if teacher_force else top1
