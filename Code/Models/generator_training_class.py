@@ -453,4 +453,4 @@ class generator:
         
         elif demo == True:
             self.model.load_state_dict(torch.load(
-                    "Models/{}.pth".format(self.model_name)))
+                    "DemoFiles/Models/{}.pth".format(self.model_name)))

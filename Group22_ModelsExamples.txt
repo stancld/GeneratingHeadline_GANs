@@ -1,0 +1,3 @@
+Discriminator - https://drive.google.com/file/d/1kpAxOe45TEU7ziBUXjM7QgaP_mJ6szd2/view?usp=sharing
+Baseline-512 generator - https://drive.google.com/file/d/14PbenEW3Mek73sWkIYzPLAGU-hvfbDkZ/view?usp=sharing
+SumGAN - https://drive.google.com/file/d/1S6tjyPdyWrWcR5stUUxqMl7rYBU9m2Fc/view?usp=sharing

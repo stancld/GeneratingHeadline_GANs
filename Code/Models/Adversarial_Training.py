@@ -738,5 +738,5 @@ class AdversarialTraining:
 
         elif demo == True:
             self.generator.model.load_state_dict(
-                    torch.load("Models/{}.pth".format(self.grid['model_name']))
+                    torch.load("DemoFiles/Models/{}.pth".format(self.grid['model_name']))
                     )
