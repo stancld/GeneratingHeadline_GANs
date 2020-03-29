@@ -706,31 +706,37 @@ class AdversarialTraining:
         f.write(str(self.epoch+1))
         f.close()
     
-    def load(self):
+    def load(self, demo = False):
         """
         Loading models' states and the states of their optimizers.
         """
-        try:
-            
-            # Load generator states and its optimizer
-            self.generator.model.load_state_dict(
-                torch.load("../data/Results/{}.pth".format(self.grid['model_name']))
-                )
-            self.optimiser_G.load_state_dict(
-                torch.load("../data/Results/opt_g_{}.pth".format(self.grid['model_name']))
-                )
-            
-            # Load discriminator states and its optimizer
-            self.discriminator.model.load_state_dict(
-                torch.load("../data/Results/disc_{}.pth".format(self.grid['model_name']))
-                )
-            self.optimiser_D.load_state_dict(
-                torch.load("../data/Results/opt_d_{}.pth".format(self.grid['model_name']))
-                )
+        if demo == False:
+            try:
+                
+                # Load generator states and its optimizer
+                self.generator.model.load_state_dict(
+                    torch.load("../data/Results/{}.pth".format(self.grid['model_name']))
+                    )
+                self.optimiser_G.load_state_dict(
+                    torch.load("../data/Results/opt_g_{}.pth".format(self.grid['model_name']))
+                    )
+                
+                # Load discriminator states and its optimizer
+                self.discriminator.model.load_state_dict(
+                    torch.load("../data/Results/disc_{}.pth".format(self.grid['model_name']))
+                    )
+                self.optimiser_D.load_state_dict(
+                    torch.load("../data/Results/opt_d_{}.pth".format(self.grid['model_name']))
+                    )
 
-            # load startin epoch
-            self.start_epoch = int(np.loadtxt(f"epochs_{self.grid['model_name']}.txt"))
-            print('Model state has been successfully loaded.')
-        except: # this is used when above files are not available, i.e. when the training with a given model_name is run for the first time
-            self.start_epoch = 0
-            print('No state has been loaded.')
+                # load startin epoch
+                self.start_epoch = int(np.loadtxt(f"epochs_{self.grid['model_name']}.txt"))
+                print('Model state has been successfully loaded.')
+            except: # this is used when above files are not available, i.e. when the training with a given model_name is run for the first time
+                self.start_epoch = 0
+                print('No state has been loaded.')
+
+        elif demo == True:
+            self.generator.model.load_state_dict(
+                    torch.load("Models/{}.pth".format(self.grid['model_name']))
+                    )

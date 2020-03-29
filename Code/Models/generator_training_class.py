@@ -422,30 +422,35 @@ class generator:
         torch.save(self.m.state_dict(),
                    "../data/Results/{}.pth".format(self.model_name))
 
-    def load(self):
+    def load(self, demo = False):
         """
         load the model to default path
         """
-        try:
-            self.model.load_state_dict(torch.load(
-                "../data/Results/{}.pth".format(self.model_name)))
-            self.train_losses = np.loadtxt(
-                'Results/{}__train_loss.txt'.format(self.model_name)).tolist()
-            self.val_losses = np.loadtxt(
-                'Results/{}__validation_loss.txt'.format(self.model_name)).tolist()
-            # proper formatting
+        if demo == False:
             try:
-                # utilized when 2 or more epochs have already been done
-                self.train_losses = sum([self.train_losses], [])
-                self.val_losses = sum([self.val_losses], [])
-            except:
-                # applied when a single has been completed
-                self.train_losses = [self.train_losses]
-                self.val_losses = [self.val_losses]
+                self.model.load_state_dict(torch.load(
+                    "../data/Results/{}.pth".format(self.model_name)))
+                self.train_losses = np.loadtxt(
+                    'Results/{}__train_loss.txt'.format(self.model_name)).tolist()
+                self.val_losses = np.loadtxt(
+                    'Results/{}__validation_loss.txt'.format(self.model_name)).tolist()
+                # proper formatting
+                try:
+                    # utilized when 2 or more epochs have already been done
+                    self.train_losses = sum([self.train_losses], [])
+                    self.val_losses = sum([self.val_losses], [])
+                except:
+                    # applied when a single has been completed
+                    self.train_losses = [self.train_losses]
+                    self.val_losses = [self.val_losses]
 
-            self.best_val_loss = min(self.val_losses)
-            self.start_epoch = len(self.train_losses)
-        except:
-            self.start_epoch = 0
-            self.train_losses, self.val_losses = [], []
-            self.best_val_loss = float('inf')
+                self.best_val_loss = min(self.val_losses)
+                self.start_epoch = len(self.train_losses)
+            except:
+                self.start_epoch = 0
+                self.train_losses, self.val_losses = [], []
+                self.best_val_loss = float('inf')
+        
+        elif demo == True:
+            self.model.load_state_dict(torch.load(
+                    "Models/{}.pth".format(self.model_name)))
